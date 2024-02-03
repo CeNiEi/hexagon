@@ -9,12 +9,12 @@ use crate::board::{
     Board,
 };
 
-pub(crate) struct Rook {
+pub(crate) struct Queen {
     location: Cell,
     color: Color,
 }
 
-impl Piece for Rook {
+impl Piece for Queen {
     fn color(&self) -> Color {
         self.color
     }
@@ -24,12 +24,18 @@ impl Piece for Rook {
     }
 
     fn valid_moves(&self, board: &Board) -> Vec<Move> {
-        const DIRECTIONS: [Direction; 6] = [
+        const DIRECTIONS: [Direction; 12] = [
+            Direction::Clock1,
             Direction::Clock2,
+            Direction::Clock3,
             Direction::Clock4,
+            Direction::Clock5,
             Direction::Clock6,
+            Direction::Clock7,
             Direction::Clock8,
+            Direction::Clock9,
             Direction::Clock10,
+            Direction::Clock11,
             Direction::Clock12,
         ];
 
@@ -54,6 +60,7 @@ impl Piece for Rook {
 
                                     true
                                 }
+
                                 None => {
                                     moves_in_curr_direction.push(Move::new(cell, MoveType::Normal));
 

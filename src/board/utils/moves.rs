@@ -1,8 +1,10 @@
 use crate::board::cell::Cell;
 
 pub(crate) enum MoveType {
+    Promotion,
     Normal,
     Capture,
+    EnPassant(Cell),
 }
 
 pub(crate) struct Move {
