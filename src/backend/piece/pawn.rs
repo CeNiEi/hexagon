@@ -2,20 +2,28 @@ use super::{Color, Piece};
 
 use std::any::Any;
 
-use crate::board::{
+use crate::backend::{
+    board::Board,
     cell::Cell,
-    utils::{
-        constants::{BLACK_PAWN_STARTING_LOCATIONS, WHITE_PAWN_STARTING_LOCATIONS},
-        direction::Direction,
-        moves::{Move, MoveType},
-    },
-    Board,
+    constants::WHITE_PAWN_STARTING_LOCATIONS,
+    direction::Direction,
+    moves::{Move, MoveType},
 };
 
 pub(crate) struct Pawn {
     location: Cell,
     color: Color,
     en_passant_able: bool,
+}
+
+impl Pawn {
+    pub(crate) fn new(location: Cell, color: Color) -> Self {
+        Self {
+            location,
+            color,
+            en_passant_able: false,
+        }
+    }
 }
 
 impl Piece for Pawn {
@@ -30,10 +38,7 @@ impl Piece for Pawn {
     fn valid_moves(&self, board: &Board) -> Vec<Move> {
         let forward_direction = Direction::Clock12;
 
-        let at_starting_pos = WHITE_PAWN_STARTING_LOCATIONS
-            .get()
-            .map(|starting_locations| starting_locations.contains(&self.location))
-            .expect("[Fatal]: STARTING_LOCATIONS should be already initialized");
+        let at_starting_pos = WHITE_PAWN_STARTING_LOCATIONS.contains(&self.location);
 
         let iter_fn =
             |current_cell: &Cell| -> Option<Cell> { current_cell.next_cell(forward_direction) };

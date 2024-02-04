@@ -1,17 +1,21 @@
-use super::{Color, Piece};
-
-use crate::board::{
+use crate::backend::{
+    board::Board,
     cell::Cell,
-    utils::{
-        direction::Direction,
-        moves::{Move, MoveType},
-    },
-    Board,
+    direction::Direction,
+    moves::{Move, MoveType},
 };
+
+use super::{Color, Piece};
 
 pub(crate) struct Knight {
     location: Cell,
     color: Color,
+}
+
+impl Knight {
+    pub(crate) fn new(location: Cell, color: Color) -> Self {
+        Self { location, color }
+    }
 }
 
 impl Piece for Knight {

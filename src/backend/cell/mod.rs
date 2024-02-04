@@ -1,7 +1,7 @@
+use super::direction::Direction;
+
 pub(crate) mod file;
 pub(crate) mod rank;
-
-use crate::board::utils::direction::Direction;
 
 pub trait Sucessor: Sized {
     fn next(&self) -> Option<Self>;
@@ -18,7 +18,7 @@ pub(crate) struct Cell {
 }
 
 impl Cell {
-    pub(crate) fn new(rank: rank::Rank, file: file::File) -> Self {
+    pub(crate) const fn new(rank: rank::Rank, file: file::File) -> Self {
         Self { rank, file }
     }
 

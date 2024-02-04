@@ -1,4 +1,4 @@
-use crate::board::cell::Cell;
+use super::cell::Cell;
 
 pub(crate) enum MoveType {
     Promotion,

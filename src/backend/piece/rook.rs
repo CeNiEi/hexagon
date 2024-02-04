@@ -1,17 +1,21 @@
-use super::{Color, Piece};
-
-use crate::board::{
+use crate::backend::{
+    board::Board,
     cell::Cell,
-    utils::{
-        direction::Direction,
-        moves::{Move, MoveType},
-    },
-    Board,
+    direction::Direction,
+    moves::{Move, MoveType},
 };
+
+use super::{Color, Piece};
 
 pub(crate) struct Rook {
     location: Cell,
     color: Color,
+}
+
+impl Rook {
+    pub(crate) fn new(location: Cell, color: Color) -> Self {
+        Self { location, color }
+    }
 }
 
 impl Piece for Rook {
@@ -36,7 +40,7 @@ impl Piece for Rook {
         let valid_moves = DIRECTIONS
             .into_iter()
             .flat_map(|direction| {
-                std::iter::successors(self.location.next_cell(direction), |current_cell| {
+                std::iter::successors(self.location.next_cell(direction), |current_cell: &Cell| {
                     current_cell.next_cell(direction)
                 })
                 .fold(

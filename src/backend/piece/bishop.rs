@@ -1,20 +1,24 @@
 use super::{Color, Piece};
 
-use crate::board::{
+use crate::backend::{
+    board::Board,
     cell::Cell,
-    utils::{
-        direction::Direction,
-        moves::{Move, MoveType},
-    },
-    Board,
+    direction::Direction,
+    moves::{Move, MoveType},
 };
 
-pub(crate) struct Queen {
+pub(crate) struct Bishop {
     location: Cell,
     color: Color,
 }
 
-impl Piece for Queen {
+impl Bishop {
+    pub(crate) fn new(location: Cell, color: Color) -> Self {
+        Self { location, color }
+    }
+}
+
+impl Piece for Bishop {
     fn color(&self) -> Color {
         self.color
     }
@@ -24,25 +28,19 @@ impl Piece for Queen {
     }
 
     fn valid_moves(&self, board: &Board) -> Vec<Move> {
-        const DIRECTIONS: [Direction; 12] = [
+        const DIRECTIONS: [Direction; 6] = [
             Direction::Clock1,
-            Direction::Clock2,
             Direction::Clock3,
-            Direction::Clock4,
             Direction::Clock5,
-            Direction::Clock6,
             Direction::Clock7,
-            Direction::Clock8,
             Direction::Clock9,
-            Direction::Clock10,
             Direction::Clock11,
-            Direction::Clock12,
         ];
 
         let valid_moves = DIRECTIONS
             .into_iter()
             .flat_map(|direction| {
-                std::iter::successors(self.location.next_cell(direction), |current_cell| {
+                std::iter::successors(self.location.next_cell(direction), |current_cell: &Cell| {
                     current_cell.next_cell(direction)
                 })
                 .fold(
@@ -60,7 +58,6 @@ impl Piece for Queen {
 
                                     true
                                 }
-
                                 None => {
                                     moves_in_curr_direction.push(Move::new(cell, MoveType::Normal));
 
