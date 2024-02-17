@@ -5,7 +5,10 @@ use ratatui::widgets::{
     Block, Borders, WidgetRef,
 };
 
-use crate::{backend::piece::Color, frontend::shape::Hexagon};
+use crate::{
+    backend::piece::Color,
+    frontend::{direction::Direction, shape::Hexagon},
+};
 
 use super::{
     cell::Cell,
@@ -68,7 +71,9 @@ impl Board {
         Self { inner }
     }
 
-    pub(crate) fn reset(&mut self) {}
+    pub(crate) fn reset(&mut self) {
+        todo!();
+    }
 }
 
 impl WidgetRef for Board {
@@ -76,19 +81,62 @@ impl WidgetRef for Board {
     where
         Self: Sized,
     {
-        let centre_x = area.width as f64 / 2.;
-        let centre_y = area.height as f64 / 2.;
+        const SIDE: f64 = 2.5;
+        const SCALE_FACTOR: f64 = 2.;
+
+        let central_hex = Hexagon {
+            x: area.width as f64 / 2.,
+            y: area.height as f64 / 2.,
+            scale_factor: SCALE_FACTOR,
+            side: SIDE,
+            color: ratatui::style::Color::White,
+        };
 
         Canvas::default()
             .x_bounds([0., area.width as f64])
             .y_bounds([0., area.height as f64])
+            .marker(ratatui::symbols::Marker::Braille)
             .paint(|ctx| {
-                ctx.draw(&Hexagon {
-                    x: centre_x,
-                    y: centre_y,
-                    side: 10.,
-                    color: ratatui::style::Color::White,
-                })
+                let top_ranks =
+                    std::iter::successors(Some((central_hex, 11)), |(hex, count_in_file)| {
+                        Some((hex.next(Direction::N), *count_in_file - 2))
+                    })
+                    .skip(1)
+                    .take(5)
+                    .flat_map(|(hex, count_in_file)| {
+                        let right_files =
+                            std::iter::successors(Some(hex), |hex| Some(hex.next(Direction::NE)))
+                                .take(count_in_file / 2 + 1);
+
+                        let left_files =
+                            std::iter::successors(Some(hex), |hex| Some(hex.next(Direction::NW)))
+                                .skip(1)
+                                .take(count_in_file / 2);
+
+                        right_files.chain(left_files)
+                    });
+
+                let bottom_ranks =
+                    std::iter::successors(Some(central_hex), |hex| Some(hex.next(Direction::S)))
+                        .take(6)
+                        .flat_map(|hex| {
+                            let right_files = std::iter::successors(Some(hex), |hex| {
+                                Some(hex.next(Direction::NE))
+                            })
+                            .take(6);
+
+                            let left_files = std::iter::successors(Some(hex), |hex| {
+                                Some(hex.next(Direction::NW))
+                            })
+                            .skip(1)
+                            .take(5);
+
+                            right_files.chain(left_files)
+                        });
+
+                top_ranks.chain(bottom_ranks).for_each(|hex| {
+                    ctx.draw(&hex);
+                });
             })
             .render_ref(area, buf)
     }

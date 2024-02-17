@@ -3,40 +3,103 @@ use ratatui::{
     widgets::canvas::{Line, Shape},
 };
 
+use super::direction::Direction;
+
+#[derive(Clone, Copy)]
 pub(crate) struct Hexagon {
     pub(crate) x: f64,
     pub(crate) y: f64,
     pub(crate) side: f64,
     pub(crate) color: Color,
+    pub(crate) scale_factor: f64,
 }
 
 impl Hexagon {
-    pub(crate) fn new(x: f64, y: f64, side: f64, color: Color) -> Self {
-        Self { x, y, side, color }
+    pub(crate) fn new(x: f64, y: f64, side: f64, scale_factor: f64, color: Color) -> Self {
+        Self {
+            x,
+            y,
+            side,
+            color,
+            scale_factor,
+        }
+    }
+
+    pub(crate) fn next(&self, direction: Direction) -> Self {
+        let padding = self.side / 10.;
+
+        match direction {
+            Direction::S => Self {
+                y: self.y - self.side * 3_f64.sqrt() - padding,
+                x: self.x,
+                side: self.side,
+                scale_factor: self.scale_factor,
+                color: self.color,
+            },
+            Direction::N => Self {
+                y: self.y + self.side * 3_f64.sqrt() + padding,
+                x: self.x,
+                side: self.side,
+                scale_factor: self.scale_factor,
+                color: self.color,
+            },
+            Direction::SE => Self {
+                y: self.y - self.side + padding,
+                x: self.x + (self.side * 1.5 + padding) * self.scale_factor,
+                side: self.side,
+                scale_factor: self.scale_factor,
+                color: self.color,
+            },
+            Direction::SW => Self {
+                y: self.y - self.side + padding,
+                x: self.x - (self.side * 1.5 + padding) * self.scale_factor,
+                side: self.side,
+                scale_factor: self.scale_factor,
+                color: self.color,
+            },
+            Direction::NW => Self {
+                y: self.y + self.side - padding,
+                x: self.x - (self.side * 1.5 + padding) * self.scale_factor,
+                side: self.side,
+                scale_factor: self.scale_factor,
+                color: self.color,
+            },
+            Direction::NE => Self {
+                y: self.y + self.side - padding,
+                x: self.x + (self.side * 1.5 + padding) * self.scale_factor,
+                side: self.side,
+                scale_factor: self.scale_factor,
+                color: self.color,
+            },
+        }
     }
 }
 
 impl Shape for Hexagon {
     fn draw(&self, painter: &mut ratatui::widgets::canvas::Painter) {
-        let point_e = (self.x + self.side, self.y);
+        // let padding = 2;
+
+        let point_e = (self.x + self.side * self.scale_factor, self.y);
 
         let point_se = (
-            self.x + self.side / 2.,
+            self.x + (self.side / 2.) * self.scale_factor,
             self.y - self.side * (3_f64.sqrt() / 2.),
         );
+
         let point_sw = (
-            self.x - self.side / 2.,
+            self.x - (self.side / 2.) * self.scale_factor,
             self.y - self.side * (3_f64.sqrt() / 2.),
         );
-        let point_w = (self.x - self.side, self.y);
+
+        let point_w = (self.x - self.side * self.scale_factor, self.y);
 
         let point_nw = (
-            self.x - self.side / 2.,
+            self.x - (self.side / 2.) * self.scale_factor,
             self.y + self.side * (3_f64.sqrt() / 2.),
         );
 
         let point_ne = (
-            self.x + self.side / 2.,
+            self.x + (self.side / 2.) * self.scale_factor,
             self.y + self.side * (3_f64.sqrt() / 2.),
         );
 
