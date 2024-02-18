@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 use ratatui::widgets::{
-    canvas::{Canvas, Line},
+    canvas::{Canvas, Circle, Line},
     Block, Borders, WidgetRef,
 };
 
 use crate::{
-    backend::piece::Color,
+    backend::{constants::GRAY_BG, piece::Color},
     frontend::{direction::Direction, shape::Hexagon},
 };
 
@@ -81,20 +81,24 @@ impl WidgetRef for Board {
     where
         Self: Sized,
     {
-        const SIDE: f64 = 2.5;
+        const SIDE: f64 = 3.;
         const SCALE_FACTOR: f64 = 2.;
 
         let central_hex = Hexagon {
-            x: area.width as f64 / 2.,
-            y: area.height as f64 / 2.,
-            scale_factor: SCALE_FACTOR,
+            x: 0.,
+            y: 0.,
             side: SIDE,
-            color: ratatui::style::Color::White,
+            color: GRAY_BG,
         };
 
+        let y_dim = area.height as f64;
+        let x_dim = y_dim * SCALE_FACTOR;
+        // let x_dim = y_dim * SCALE_FACTOR;
+
         Canvas::default()
-            .x_bounds([0., area.width as f64])
-            .y_bounds([0., area.height as f64])
+            .x_bounds([-x_dim / 2., x_dim / 2.])
+            .y_bounds([-y_dim / 2., y_dim / 2.])
+            .block(Block::default().borders(Borders::ALL))
             .marker(ratatui::symbols::Marker::Braille)
             .paint(|ctx| {
                 let top_ranks =
@@ -137,6 +141,14 @@ impl WidgetRef for Board {
                 top_ranks.chain(bottom_ranks).for_each(|hex| {
                     ctx.draw(&hex);
                 });
+
+                // ctx.draw(&central_hex);
+                // ctx.draw(&central_hex.next(Direction::NW));
+                // ctx.draw(&central_hex.next(Direction::NE));
+                // ctx.draw(&central_hex.next(Direction::S));
+                // ctx.draw(&central_hex.next(Direction::SE));
+                // ctx.draw(&central_hex.next(Direction::SW));
+                // ctx.draw(&central_hex.next(Direction::N));
             })
             .render_ref(area, buf)
     }

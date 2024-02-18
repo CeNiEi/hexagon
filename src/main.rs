@@ -10,6 +10,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     tui.enter()?;
 
     for _ in 0..1 {
+        // while !app.terminate {
         tui.draw(&mut app)?;
     }
 

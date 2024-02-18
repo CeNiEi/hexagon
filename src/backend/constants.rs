@@ -1,3 +1,5 @@
+use ratatui::style::Color;
+
 use super::cell::{file::File, rank::Rank, Cell};
 
 pub(crate) const WHITE_PAWN_STARTING_LOCATIONS: [Cell; 9] = [
@@ -31,3 +33,7 @@ pub(crate) const WHITE_BISHOP_STARTING_LOCATION: [Cell; 3] = [
     Cell::new(Rank::Rank2, File::FileF),
     Cell::new(Rank::Rank3, File::FileF),
 ];
+
+pub(crate) const GRAY_BG: Color = Color::Red;
+pub(crate) const BLACK_BG: Color = Color::Blue;
+pub(crate) const WHITE_BG: Color = Color::Green;

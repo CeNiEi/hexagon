@@ -3,73 +3,73 @@ use ratatui::{
     widgets::canvas::{Line, Shape},
 };
 
+use crate::backend::constants::{BLACK_BG, GRAY_BG, WHITE_BG};
+
 use super::direction::Direction;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub(crate) struct Hexagon {
     pub(crate) x: f64,
     pub(crate) y: f64,
     pub(crate) side: f64,
     pub(crate) color: Color,
-    pub(crate) scale_factor: f64,
 }
 
 impl Hexagon {
-    pub(crate) fn new(x: f64, y: f64, side: f64, scale_factor: f64, color: Color) -> Self {
-        Self {
-            x,
-            y,
-            side,
-            color,
-            scale_factor,
-        }
+    pub(crate) fn new(x: f64, y: f64, side: f64, color: Color) -> Self {
+        Self { x, y, side, color }
     }
 
     pub(crate) fn next(&self, direction: Direction) -> Self {
-        let padding = self.side / 10.;
+        let color = match (self.color, direction) {
+            (GRAY_BG, Direction::NE | Direction::NW | Direction::S) => BLACK_BG,
+            (GRAY_BG, Direction::SE | Direction::SW | Direction::N) => WHITE_BG,
+
+            (BLACK_BG, Direction::NE | Direction::NW | Direction::S) => WHITE_BG,
+            (BLACK_BG, Direction::SE | Direction::SW | Direction::N) => GRAY_BG,
+
+            (WHITE_BG, Direction::NE | Direction::NW | Direction::S) => GRAY_BG,
+            (WHITE_BG, Direction::SE | Direction::SW | Direction::N) => BLACK_BG,
+
+            _ => panic!("[FATAL]: Impossible Background color encountered"),
+        };
 
         match direction {
             Direction::S => Self {
-                y: self.y - self.side * 3_f64.sqrt() - padding,
+                y: self.y - (self.side * 3_f64.sqrt()),
                 x: self.x,
                 side: self.side,
-                scale_factor: self.scale_factor,
-                color: self.color,
+                color,
             },
             Direction::N => Self {
-                y: self.y + self.side * 3_f64.sqrt() + padding,
+                y: self.y + (self.side * 3_f64.sqrt()),
                 x: self.x,
                 side: self.side,
-                scale_factor: self.scale_factor,
-                color: self.color,
+                color,
             },
             Direction::SE => Self {
-                y: self.y - self.side + padding,
-                x: self.x + (self.side * 1.5 + padding) * self.scale_factor,
+                y: self.y - (self.side * 3_f64.sqrt() / 2.),
+                x: self.x + (self.side * 1.5),
                 side: self.side,
-                scale_factor: self.scale_factor,
-                color: self.color,
+                color,
             },
             Direction::SW => Self {
-                y: self.y - self.side + padding,
-                x: self.x - (self.side * 1.5 + padding) * self.scale_factor,
+                y: self.y - (self.side * 3_f64.sqrt() / 2.),
+                x: self.x - (self.side * 1.5),
                 side: self.side,
-                scale_factor: self.scale_factor,
-                color: self.color,
+                color,
             },
             Direction::NW => Self {
-                y: self.y + self.side - padding,
-                x: self.x - (self.side * 1.5 + padding) * self.scale_factor,
+                y: self.y + (self.side * 3_f64.sqrt() / 2.),
+                x: self.x - (self.side * 1.5),
                 side: self.side,
-                scale_factor: self.scale_factor,
-                color: self.color,
+                color,
             },
             Direction::NE => Self {
-                y: self.y + self.side - padding,
-                x: self.x + (self.side * 1.5 + padding) * self.scale_factor,
+                y: self.y + (self.side * 3_f64.sqrt() / 2.),
+                x: self.x + (self.side * 1.5),
                 side: self.side,
-                scale_factor: self.scale_factor,
-                color: self.color,
+                color,
             },
         }
     }
@@ -77,31 +77,21 @@ impl Hexagon {
 
 impl Shape for Hexagon {
     fn draw(&self, painter: &mut ratatui::widgets::canvas::Painter) {
-        // let padding = 2;
+        let padding = self.side / 5.;
 
-        let point_e = (self.x + self.side * self.scale_factor, self.y);
+        let side = self.side - padding;
 
-        let point_se = (
-            self.x + (self.side / 2.) * self.scale_factor,
-            self.y - self.side * (3_f64.sqrt() / 2.),
-        );
+        let point_e = (self.x + side, self.y);
 
-        let point_sw = (
-            self.x - (self.side / 2.) * self.scale_factor,
-            self.y - self.side * (3_f64.sqrt() / 2.),
-        );
+        let point_se = (self.x + (side / 2.), self.y - side * (3_f64.sqrt() / 2.));
 
-        let point_w = (self.x - self.side * self.scale_factor, self.y);
+        let point_sw = (self.x - (side / 2.), self.y - side * (3_f64.sqrt() / 2.));
 
-        let point_nw = (
-            self.x - (self.side / 2.) * self.scale_factor,
-            self.y + self.side * (3_f64.sqrt() / 2.),
-        );
+        let point_w = (self.x - side, self.y);
 
-        let point_ne = (
-            self.x + (self.side / 2.) * self.scale_factor,
-            self.y + self.side * (3_f64.sqrt() / 2.),
-        );
+        let point_nw = (self.x - (side / 2.), self.y + side * (3_f64.sqrt() / 2.));
+
+        let point_ne = (self.x + (side / 2.), self.y + side * (3_f64.sqrt() / 2.));
 
         let segment_e_se = Line {
             x1: point_e.0,
