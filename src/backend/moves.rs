@@ -2,7 +2,7 @@ use super::cell::Cell;
 
 pub(crate) enum MoveType {
     Promotion,
-    Normal,
+    NonCapture,
     Capture,
     EnPassant(Cell),
 }

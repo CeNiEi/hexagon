@@ -1,4 +1,6 @@
-use super::{Color, Piece};
+use ratatui::style::Color;
+
+use super::Piece;
 
 use crate::backend::{
     board::Board,
@@ -8,13 +10,12 @@ use crate::backend::{
 };
 
 pub(crate) struct King {
-    location: Cell,
     color: Color,
 }
 
 impl King {
-    pub(crate) fn new(location: Cell, color: Color) -> Self {
-        Self { location, color }
+    pub(crate) fn new(color: Color) -> Self {
+        Self { color }
     }
 }
 
@@ -23,11 +24,7 @@ impl Piece for King {
         self.color
     }
 
-    fn location(&self) -> Cell {
-        self.location
-    }
-
-    fn valid_moves(&self, board: &Board) -> Vec<Move> {
+    fn valid_moves(&self, cell: &Cell, board: &Board) -> Vec<Move> {
         const DIRECTIONS: [Direction; 12] = [
             Direction::Clock1,
             Direction::Clock2,
@@ -46,11 +43,11 @@ impl Piece for King {
         let valid_moves = DIRECTIONS
             .into_iter()
             .filter_map(|direction| {
-                let Some(next_cell) = self.location.next_cell(direction) else {
+                let Some(next_cell) = cell.next_cell(direction) else {
                     return None;
                 };
 
-                match board.inner.get(&next_cell) {
+                match board[next_cell].occupant() {
                     Some(piece) => {
                         if piece.color() != self.color {
                             Some(Move::new(next_cell, MoveType::Capture))
@@ -59,7 +56,7 @@ impl Piece for King {
                         }
                     }
 
-                    None => Some(Move::new(next_cell, MoveType::Normal)),
+                    None => Some(Move::new(next_cell, MoveType::NonCapture)),
                 }
             })
             .collect::<Vec<_>>();

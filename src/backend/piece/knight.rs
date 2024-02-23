@@ -1,3 +1,5 @@
+use ratatui::style::Color;
+
 use crate::backend::{
     board::Board,
     cell::Cell,
@@ -5,16 +7,15 @@ use crate::backend::{
     moves::{Move, MoveType},
 };
 
-use super::{Color, Piece};
+use super::Piece;
 
 pub(crate) struct Knight {
-    location: Cell,
     color: Color,
 }
 
 impl Knight {
-    pub(crate) fn new(location: Cell, color: Color) -> Self {
-        Self { location, color }
+    pub(crate) fn new(color: Color) -> Self {
+        Self { color }
     }
 }
 
@@ -23,11 +24,7 @@ impl Piece for Knight {
         self.color
     }
 
-    fn location(&self) -> Cell {
-        self.location
-    }
-
-    fn valid_moves(&self, board: &Board) -> Vec<Move> {
+    fn valid_moves(&self, cell: &Cell, board: &Board) -> Vec<Move> {
         const DIRECTIONS: [Direction; 6] = [
             Direction::Clock2,
             Direction::Clock4,
@@ -40,8 +37,7 @@ impl Piece for Knight {
         let valid_moves = DIRECTIONS
             .into_iter()
             .flat_map(|direction| {
-                let Some((position_a, position_b)) = self
-                    .location
+                let Some((position_a, position_b)) = cell
                     .next_cell(direction)
                     .map(|next_cell| next_cell.next_cell(direction))
                     .flatten()
@@ -59,7 +55,7 @@ impl Piece for Knight {
                     .into_iter()
                     .filter_map(|position| {
                         position
-                            .map(|cell| match board.inner.get(&cell) {
+                            .map(|cell| match board[cell].occupant() {
                                 Some(piece) => {
                                     if piece.color() != self.color {
                                         Some(Move::new(cell, MoveType::Capture))
@@ -68,7 +64,7 @@ impl Piece for Knight {
                                     }
                                 }
 
-                                None => Some(Move::new(cell, MoveType::Normal)),
+                                None => Some(Move::new(cell, MoveType::NonCapture)),
                             })
                             .flatten()
                     })

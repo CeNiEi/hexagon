@@ -1,12 +1,15 @@
+use std::ops::Sub;
+
 use super::{Predecessor, Sucessor};
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Default, Debug, PartialOrd)]
 pub enum File {
     FileA,
     FileB,
     FileC,
     FileD,
     FileE,
+    #[default]
     FileF,
     FileG,
     FileH,
@@ -15,8 +18,15 @@ pub enum File {
     FileL,
 }
 
-impl Predecessor for File {
-    fn previous(&self) -> Option<Self> {
+impl Sub for File {
+    type Output = i8;
+    fn sub(self, rhs: Self) -> Self::Output {
+        self as i8 - rhs as i8
+    }
+}
+
+impl Sucessor for File {
+    fn next(&self) -> Option<Self> {
         match self {
             File::FileA => Some(File::FileB),
             File::FileB => Some(File::FileC),
@@ -33,8 +43,8 @@ impl Predecessor for File {
     }
 }
 
-impl Sucessor for File {
-    fn next(&self) -> Option<Self> {
+impl Predecessor for File {
+    fn previous(&self) -> Option<Self> {
         match self {
             File::FileA => None,
             File::FileB => Some(File::FileA),

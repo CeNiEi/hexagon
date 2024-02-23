@@ -1,4 +1,6 @@
-use super::{Color, Piece};
+use ratatui::style::Color;
+
+use super::Piece;
 
 use crate::backend::{
     board::Board,
@@ -8,13 +10,12 @@ use crate::backend::{
 };
 
 pub(crate) struct Bishop {
-    location: Cell,
     color: Color,
 }
 
 impl Bishop {
-    pub(crate) fn new(location: Cell, color: Color) -> Self {
-        Self { location, color }
+    pub(crate) fn new(color: Color) -> Self {
+        Self { color }
     }
 }
 
@@ -23,11 +24,7 @@ impl Piece for Bishop {
         self.color
     }
 
-    fn location(&self) -> Cell {
-        self.location
-    }
-
-    fn valid_moves(&self, board: &Board) -> Vec<Move> {
+    fn valid_moves(&self, cell: &Cell, board: &Board) -> Vec<Move> {
         const DIRECTIONS: [Direction; 6] = [
             Direction::Clock1,
             Direction::Clock3,
@@ -40,7 +37,7 @@ impl Piece for Bishop {
         let valid_moves = DIRECTIONS
             .into_iter()
             .flat_map(|direction| {
-                std::iter::successors(self.location.next_cell(direction), |current_cell: &Cell| {
+                std::iter::successors(cell.next_cell(direction), |current_cell: &Cell| {
                     current_cell.next_cell(direction)
                 })
                 .fold(
@@ -49,7 +46,7 @@ impl Piece for Bishop {
                         if encountered {
                             (moves_in_curr_direction, encountered)
                         } else {
-                            let encountered = match board.inner.get(&cell) {
+                            let encountered = match board[cell].occupant() {
                                 Some(piece) => {
                                     if piece.color() != self.color {
                                         moves_in_curr_direction
@@ -59,7 +56,8 @@ impl Piece for Bishop {
                                     true
                                 }
                                 None => {
-                                    moves_in_curr_direction.push(Move::new(cell, MoveType::Normal));
+                                    moves_in_curr_direction
+                                        .push(Move::new(cell, MoveType::NonCapture));
 
                                     false
                                 }

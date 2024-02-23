@@ -9,11 +9,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut tui = Tui::new()?;
     tui.enter()?;
 
-    for _ in 0..1 {
-        // while !app.terminate {
+    while !app.terminate {
         tui.draw(&mut app)?;
+        app.handle_events()?;
     }
 
-    // tui.exit()?;
     Ok(())
 }

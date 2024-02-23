@@ -1,18 +1,28 @@
+use std::ops::Sub;
+
 use super::{Predecessor, Sucessor};
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Default, Debug, PartialOrd)]
 pub enum Rank {
     Rank1,
     Rank2,
     Rank3,
     Rank4,
     Rank5,
+    #[default]
     Rank6,
     Rank7,
     Rank8,
     Rank9,
     Rank10,
     Rank11,
+}
+
+impl Sub for Rank {
+    type Output = i8;
+    fn sub(self, rhs: Self) -> Self::Output {
+        self as i8 - rhs as i8
+    }
 }
 
 impl Sucessor for Rank {

@@ -14,6 +14,12 @@ pub(crate) struct Tui {
 
 impl Tui {
     pub(crate) fn new() -> Result<Self, Box<dyn std::error::Error>> {
+        let prev_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(move |info| {
+            Self::reset().unwrap();
+            prev_hook(info);
+        }));
+
         let backend = CrosstermBackend::new(std::io::stderr());
         let terminal = Terminal::new(backend)?;
 

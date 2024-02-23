@@ -1,4 +1,6 @@
-use super::{Color, Piece};
+use ratatui::style::Color;
+
+use super::Piece;
 
 use std::any::Any;
 
@@ -11,15 +13,13 @@ use crate::backend::{
 };
 
 pub(crate) struct Pawn {
-    location: Cell,
     color: Color,
     en_passant_able: bool,
 }
 
 impl Pawn {
-    pub(crate) fn new(location: Cell, color: Color) -> Self {
+    pub(crate) fn new(color: Color) -> Self {
         Self {
-            location,
             color,
             en_passant_able: false,
         }
@@ -31,22 +31,18 @@ impl Piece for Pawn {
         self.color
     }
 
-    fn location(&self) -> Cell {
-        self.location
-    }
-
-    fn valid_moves(&self, board: &Board) -> Vec<Move> {
+    fn valid_moves(&self, cell: &Cell, board: &Board) -> Vec<Move> {
         let forward_direction = Direction::Clock12;
 
-        let at_starting_pos = WHITE_PAWN_STARTING_LOCATIONS.contains(&self.location);
+        let at_starting_pos = WHITE_PAWN_STARTING_LOCATIONS.contains(cell);
 
         let iter_fn =
             |current_cell: &Cell| -> Option<Cell> { current_cell.next_cell(forward_direction) };
 
         let mut valid_moves = if at_starting_pos {
-            std::iter::successors(self.location.next_cell(forward_direction), iter_fn).take(2)
+            std::iter::successors(cell.next_cell(forward_direction), iter_fn).take(2)
         } else {
-            std::iter::successors(self.location.next_cell(forward_direction), iter_fn).take(1)
+            std::iter::successors(cell.next_cell(forward_direction), iter_fn).take(1)
         }
         .fold(
             (vec![], false),
@@ -54,7 +50,7 @@ impl Piece for Pawn {
                 if encountered {
                     (moves_in_curr_direction, encountered)
                 } else {
-                    let encountered = match board.inner.get(&cell) {
+                    let encountered = match board[cell].occupant() {
                         Some(_) => true,
                         None => {
                             let promotion_cell = cell.next_cell(forward_direction).is_none();
@@ -62,7 +58,7 @@ impl Piece for Pawn {
                             if promotion_cell {
                                 moves_in_curr_direction.push(Move::new(cell, MoveType::Promotion));
                             } else {
-                                moves_in_curr_direction.push(Move::new(cell, MoveType::Normal));
+                                moves_in_curr_direction.push(Move::new(cell, MoveType::NonCapture));
                             };
 
                             false
@@ -76,14 +72,13 @@ impl Piece for Pawn {
         .0;
 
         let capture_moves = [
-            self.location.next_cell(forward_direction.turn_clockwise()),
-            self.location
-                .next_cell(forward_direction.turn_counter_clockwise()),
+            cell.next_cell(forward_direction.turn_clockwise()),
+            cell.next_cell(forward_direction.turn_counter_clockwise()),
         ]
         .into_iter()
         .filter_map(|position| {
             position
-                .map(|cell| match board.inner.get(&cell) {
+                .map(|cell| match board[cell].occupant() {
                     Some(piece) => {
                         if piece.color() != self.color {
                             Some(Move::new(cell, MoveType::Capture))
@@ -97,9 +92,8 @@ impl Piece for Pawn {
                             return None;
                         };
 
-                        board
-                            .inner
-                            .get(&en_passant_cell)
+                        board[en_passant_cell]
+                            .occupant()
                             .map(|piece| {
                                 if piece.color() != self.color {
                                     (piece as &dyn Any)
