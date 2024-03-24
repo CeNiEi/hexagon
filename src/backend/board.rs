@@ -5,7 +5,9 @@ use std::{
 };
 
 use ratatui::{
+    layout::Alignment,
     style::Color,
+    text::{Line, Text},
     widgets::{canvas::Canvas, Block, Borders, WidgetRef},
 };
 
@@ -14,6 +16,9 @@ use crate::backend::constants::ALL_CELLS;
 use super::{
     cell::{file::File, rank::Rank, Cell},
     constants::{
+        BLACK_BISHOP_STARTING_LOCATION, BLACK_KING_STARTING_LOCATION,
+        BLACK_KNIGHT_STARTING_LOCATION, BLACK_PAWN_STARTING_LOCATIONS,
+        BLACK_QUEEN_STARTING_LOCATION, BLACK_ROOK_STARTING_LOCATION,
         WHITE_BISHOP_STARTING_LOCATION, WHITE_KING_STARTING_LOCATION,
         WHITE_KNIGHT_STARTING_LOCATION, WHITE_PAWN_STARTING_LOCATIONS,
         WHITE_QUEEN_STARTING_LOCATION, WHITE_ROOK_STARTING_LOCATION,
@@ -106,10 +111,24 @@ impl Board {
             );
         });
 
+        BLACK_ROOK_STARTING_LOCATION.into_iter().for_each(|cell| {
+            board[cell] = Entry::new(
+                cell,
+                Some(Box::new(Rook::new(Color::Black)) as Box<dyn Piece>),
+            );
+        });
+
         WHITE_KNIGHT_STARTING_LOCATION.into_iter().for_each(|cell| {
             board[cell] = Entry::new(
                 cell,
                 Some(Box::new(Knight::new(Color::White)) as Box<dyn Piece>),
+            );
+        });
+
+        BLACK_KNIGHT_STARTING_LOCATION.into_iter().for_each(|cell| {
+            board[cell] = Entry::new(
+                cell,
+                Some(Box::new(Knight::new(Color::Black)) as Box<dyn Piece>),
             );
         });
 
@@ -120,10 +139,24 @@ impl Board {
             );
         });
 
+        BLACK_BISHOP_STARTING_LOCATION.into_iter().for_each(|cell| {
+            board[cell] = Entry::new(
+                cell,
+                Some(Box::new(Bishop::new(Color::Black)) as Box<dyn Piece>),
+            );
+        });
+
         WHITE_PAWN_STARTING_LOCATIONS.into_iter().for_each(|cell| {
             board[cell] = Entry::new(
                 cell,
                 Some(Box::new(Pawn::new(Color::White)) as Box<dyn Piece>),
+            );
+        });
+
+        BLACK_PAWN_STARTING_LOCATIONS.into_iter().for_each(|cell| {
+            board[cell] = Entry::new(
+                cell,
+                Some(Box::new(Pawn::new(Color::Black)) as Box<dyn Piece>),
             );
         });
 
@@ -132,9 +165,19 @@ impl Board {
             Some(Box::new(Queen::new(Color::White)) as Box<dyn Piece>),
         );
 
+        board[BLACK_QUEEN_STARTING_LOCATION] = Entry::new(
+            BLACK_QUEEN_STARTING_LOCATION,
+            Some(Box::new(Queen::new(Color::Black)) as Box<dyn Piece>),
+        );
+
         board[WHITE_KING_STARTING_LOCATION] = Entry::new(
             WHITE_KING_STARTING_LOCATION,
             Some(Box::new(King::new(Color::White)) as Box<dyn Piece>),
+        );
+
+        board[BLACK_KING_STARTING_LOCATION] = Entry::new(
+            BLACK_KING_STARTING_LOCATION,
+            Some(Box::new(King::new(Color::Black)) as Box<dyn Piece>),
         );
 
         board[Cell::default()]
@@ -186,15 +229,21 @@ impl WidgetRef for Board {
             .y_bounds([-y_dim / 2., y_dim / 2.])
             .block(Block::default().borders(Borders::ALL))
             .marker(ratatui::symbols::Marker::Braille)
-            .background_color(Color::Gray)
+            .background_color(Color::DarkGray)
             .paint(|ctx| {
                 self.inner.iter().for_each(|row| {
                     row.iter().for_each(|entry| {
                         if let Some(entry) = entry {
-                            ctx.draw(entry.cell())
+                            ctx.draw(entry.cell());
+
+                            if let Some(occupant) = entry.occupant() {
+                                let (x, y) = entry.cell().get_center();
+
+                                ctx.print(x, y, occupant.mark());
+                            }
                         };
                     });
-                })
+                });
             })
             .render_ref(area, buf)
     }

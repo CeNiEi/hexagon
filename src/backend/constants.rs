@@ -12,6 +12,23 @@ pub(crate) const WHITE_PAWN_STARTING_LOCATIONS: [Cell; 9] = [
     Cell::new(Rank::Rank1, File::FileK),
 ];
 
+pub(crate) const BLACK_PAWN_STARTING_LOCATIONS: [Cell; 9] = [
+    Cell::new(Rank::Rank7, File::FileB),
+    Cell::new(Rank::Rank7, File::FileC),
+    Cell::new(Rank::Rank7, File::FileD),
+    Cell::new(Rank::Rank7, File::FileE),
+    Cell::new(Rank::Rank7, File::FileF),
+    Cell::new(Rank::Rank7, File::FileG),
+    Cell::new(Rank::Rank7, File::FileH),
+    Cell::new(Rank::Rank7, File::FileI),
+    Cell::new(Rank::Rank7, File::FileK),
+];
+
+pub(crate) const BLACK_ROOK_STARTING_LOCATION: [Cell; 2] = [
+    Cell::new(Rank::Rank8, File::FileC),
+    Cell::new(Rank::Rank8, File::FileI),
+];
+
 pub(crate) const WHITE_ROOK_STARTING_LOCATION: [Cell; 2] = [
     Cell::new(Rank::Rank1, File::FileC),
     Cell::new(Rank::Rank1, File::FileI),
@@ -22,14 +39,29 @@ pub(crate) const WHITE_KNIGHT_STARTING_LOCATION: [Cell; 2] = [
     Cell::new(Rank::Rank1, File::FileH),
 ];
 
+pub(crate) const BLACK_KNIGHT_STARTING_LOCATION: [Cell; 2] = [
+    Cell::new(Rank::Rank9, File::FileD),
+    Cell::new(Rank::Rank9, File::FileH),
+];
+
 pub(crate) const WHITE_KING_STARTING_LOCATION: Cell = Cell::new(Rank::Rank1, File::FileG);
 
+pub(crate) const BLACK_KING_STARTING_LOCATION: Cell = Cell::new(Rank::Rank10, File::FileG);
+
 pub(crate) const WHITE_QUEEN_STARTING_LOCATION: Cell = Cell::new(Rank::Rank1, File::FileE);
+
+pub(crate) const BLACK_QUEEN_STARTING_LOCATION: Cell = Cell::new(Rank::Rank10, File::FileE);
 
 pub(crate) const WHITE_BISHOP_STARTING_LOCATION: [Cell; 3] = [
     Cell::new(Rank::Rank1, File::FileF),
     Cell::new(Rank::Rank2, File::FileF),
     Cell::new(Rank::Rank3, File::FileF),
+];
+
+pub(crate) const BLACK_BISHOP_STARTING_LOCATION: [Cell; 3] = [
+    Cell::new(Rank::Rank9, File::FileF),
+    Cell::new(Rank::Rank10, File::FileF),
+    Cell::new(Rank::Rank11, File::FileF),
 ];
 
 pub(crate) const ALL_CELLS: [Cell; 91] = [

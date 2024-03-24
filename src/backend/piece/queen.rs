@@ -1,4 +1,7 @@
-use ratatui::style::Color;
+use ratatui::{
+    style::{Color, Style, Stylize},
+    text::Line,
+};
 
 use super::Piece;
 
@@ -22,6 +25,15 @@ impl Queen {
 impl Piece for Queen {
     fn color(&self) -> Color {
         self.color
+    }
+
+    fn mark(&self) -> Line<'static> {
+        match self.color {
+            Color::Black => "♛",
+            Color::White => "♕",
+            _ => unreachable!(),
+        }
+        .into()
     }
 
     fn valid_moves(&self, cell: &Cell, board: &Board) -> Vec<Move> {

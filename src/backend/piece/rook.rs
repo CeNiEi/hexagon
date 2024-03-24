@@ -1,4 +1,7 @@
-use ratatui::style::Color;
+use ratatui::{
+    style::{Color, Style, Stylize},
+    text::Line,
+};
 
 use crate::backend::{
     board::Board,
@@ -22,6 +25,15 @@ impl Rook {
 impl Piece for Rook {
     fn color(&self) -> Color {
         self.color
+    }
+
+    fn mark(&self) -> Line<'static> {
+        match self.color {
+            Color::White => "♖",
+            Color::Black => "♜",
+            _ => unreachable!(),
+        }
+        .into()
     }
 
     fn valid_moves(&self, location: &Cell, board: &Board) -> Vec<Move> {

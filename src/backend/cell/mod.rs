@@ -53,7 +53,7 @@ impl Sub for Cell {
 impl Shape for Cell {
     fn draw(&self, painter: &mut ratatui::widgets::canvas::Painter) {
         let (x, y) = self.get_center();
-        let side = 0.8 * Self::SIDE;
+        let side = 1. * Self::SIDE;
 
         let (sides, color) = match self.highlight_level {
             HighlightLevel::None => (vec![side].into_iter(), Color::Black),

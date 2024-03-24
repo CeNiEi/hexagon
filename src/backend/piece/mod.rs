@@ -1,4 +1,4 @@
-use ratatui::style::Color;
+use ratatui::{style::Color, text::Line};
 
 use super::{board::Board, cell::Cell, moves::Move};
 
@@ -12,4 +12,5 @@ pub(crate) mod rook;
 pub(crate) trait Piece {
     fn valid_moves(&self, location: &Cell, board: &Board) -> Vec<Move>;
     fn color(&self) -> Color;
+    fn mark(&self) -> Line<'static>;
 }

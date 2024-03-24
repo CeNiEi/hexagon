@@ -1,4 +1,7 @@
-use ratatui::style::Color;
+use ratatui::{
+    style::{Color, Style, Stylize},
+    text::Line,
+};
 
 use super::Piece;
 
@@ -20,6 +23,15 @@ impl King {
 }
 
 impl Piece for King {
+    fn mark(&self) -> Line<'static> {
+        match self.color {
+            Color::White => "♔",
+            Color::Black => "♚",
+            _ => unreachable!(),
+        }
+        .into()
+    }
+
     fn color(&self) -> Color {
         self.color
     }
