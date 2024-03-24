@@ -36,7 +36,7 @@ impl Piece for Rook {
         .into()
     }
 
-    fn valid_moves(&self, location: &Cell, board: &Board) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board) -> Vec<Move> {
         const DIRECTIONS: [Direction; 6] = [
             Direction::Clock2,
             Direction::Clock4,
@@ -46,10 +46,12 @@ impl Piece for Rook {
             Direction::Clock12,
         ];
 
+        let cell = board.current;
+
         let valid_moves = DIRECTIONS
             .into_iter()
             .flat_map(|direction| {
-                std::iter::successors(location.next_cell(direction), |current_cell: &Cell| {
+                std::iter::successors(cell.next_cell(direction), |current_cell: &Cell| {
                     current_cell.next_cell(direction)
                 })
                 .fold(

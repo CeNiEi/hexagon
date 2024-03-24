@@ -10,7 +10,7 @@ use std::any::Any;
 use crate::backend::{
     board::Board,
     cell::Cell,
-    constants::WHITE_PAWN_STARTING_LOCATIONS,
+    constants::{BLACK_PAWN_STARTING_LOCATIONS, WHITE_PAWN_STARTING_LOCATIONS},
     direction::Direction,
     moves::{Move, MoveType},
 };
@@ -43,10 +43,20 @@ impl Piece for Pawn {
         .into()
     }
 
-    fn valid_moves(&self, cell: &Cell, board: &Board) -> Vec<Move> {
-        let forward_direction = Direction::Clock12;
+    fn valid_moves(&self, board: &Board) -> Vec<Move> {
+        let forward_direction = if self.color == Color::White {
+            Direction::Clock12
+        } else {
+            Direction::Clock6
+        };
 
-        let at_starting_pos = WHITE_PAWN_STARTING_LOCATIONS.contains(cell);
+        let cell = board.current;
+
+        let at_starting_pos = if self.color == Color::White {
+            WHITE_PAWN_STARTING_LOCATIONS.contains(&cell)
+        } else {
+            BLACK_PAWN_STARTING_LOCATIONS.contains(&cell)
+        };
 
         let iter_fn =
             |current_cell: &Cell| -> Option<Cell> { current_cell.next_cell(forward_direction) };

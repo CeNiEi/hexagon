@@ -14,7 +14,7 @@ use ratatui::{
 use crate::backend::constants::ALL_CELLS;
 
 use super::{
-    cell::{file::File, rank::Rank, Cell},
+    cell::{file::File, rank::Rank, Cell, HighlightLevel},
     constants::{
         BLACK_BISHOP_STARTING_LOCATION, BLACK_KING_STARTING_LOCATION,
         BLACK_KNIGHT_STARTING_LOCATION, BLACK_PAWN_STARTING_LOCATIONS,
@@ -24,6 +24,7 @@ use super::{
         WHITE_QUEEN_STARTING_LOCATION, WHITE_ROOK_STARTING_LOCATION,
     },
     direction::Direction,
+    moves::MoveType,
     piece::{
         bishop::Bishop, king::King, knight::Knight, pawn::Pawn, queen::Queen, rook::Rook, Piece,
     },
@@ -58,8 +59,9 @@ impl<P> Entry<P> {
 }
 
 pub(crate) struct Board {
-    inner: [[Option<Entry<Box<dyn Piece>>>; 11]; 11],
-    current: Cell,
+    pub(crate) inner: [[Option<Entry<Box<dyn Piece>>>; 11]; 11],
+    pub(crate) current: Cell,
+    pub(crate) highlited: Vec<Cell>,
 }
 
 impl Index<Cell> for Board {
@@ -96,6 +98,7 @@ impl Default for Board {
         Self {
             inner,
             current: Cell::default(),
+            highlited: Vec::new(),
         }
     }
 }
@@ -187,6 +190,28 @@ impl Board {
         board
     }
 
+    pub(crate) fn select_current(&mut self) {
+        self[self.current]
+            .occupant()
+            .map(|occupant| occupant.valid_moves(&self))
+            .unwrap_or_default()
+            .into_iter()
+            .for_each(|mv| {
+                let highlight_level = match mv.move_type {
+                    MoveType::NonCapture => HighlightLevel::Movable,
+                    MoveType::Promotion => HighlightLevel::Promotable,
+                    MoveType::Capture => HighlightLevel::Caputreable,
+                    MoveType::EnPassant(_) => unimplemented!(),
+                };
+
+                self[mv.cell]
+                    .cell_mut()
+                    .set_highlight_level(highlight_level);
+
+                self.highlited.push(mv.cell);
+            });
+    }
+
     pub(crate) fn move_current(&mut self, direction: Direction) {
         let next = self.current.next_cell(direction);
 
@@ -202,11 +227,31 @@ impl Board {
             .cell_mut()
             .set_highlight_level(super::cell::HighlightLevel::None);
 
+        self.highlited.clone().into_iter().for_each(|cell| {
+            self[cell]
+                .cell_mut()
+                .set_highlight_level(super::cell::HighlightLevel::None);
+        });
+
         self[cell]
             .cell_mut()
             .set_highlight_level(super::cell::HighlightLevel::Current);
 
         self.current = cell;
+
+        self.highlited.clear();
+    }
+
+    pub(crate) fn test_directions(&mut self, direction: Direction) {
+        let next = self.current.next_cell(direction);
+
+        if let Some(next) = next {
+            self[next]
+                .cell_mut()
+                .set_highlight_level(HighlightLevel::Caputreable);
+
+            self.highlited.push(next);
+        }
     }
 
     pub(crate) fn reset(&mut self) {

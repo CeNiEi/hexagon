@@ -36,7 +36,7 @@ impl Piece for Knight {
         self.color
     }
 
-    fn valid_moves(&self, cell: &Cell, board: &Board) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board) -> Vec<Move> {
         const DIRECTIONS: [Direction; 6] = [
             Direction::Clock2,
             Direction::Clock4,
@@ -45,6 +45,8 @@ impl Piece for Knight {
             Direction::Clock10,
             Direction::Clock12,
         ];
+
+        let cell = board.current;
 
         let valid_moves = DIRECTIONS
             .into_iter()

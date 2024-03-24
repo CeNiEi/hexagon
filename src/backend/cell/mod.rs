@@ -24,6 +24,7 @@ pub trait Predecessor: Sized {
 pub(crate) enum HighlightLevel {
     #[default]
     None,
+    Promotable,
     Current,
     Caputreable,
     Movable,
@@ -53,16 +54,17 @@ impl Sub for Cell {
 impl Shape for Cell {
     fn draw(&self, painter: &mut ratatui::widgets::canvas::Painter) {
         let (x, y) = self.get_center();
-        let side = 1. * Self::SIDE;
+        let side = 0.8 * Self::SIDE;
 
-        let (sides, color) = match self.highlight_level {
-            HighlightLevel::None => (vec![side].into_iter(), Color::Black),
-            HighlightLevel::Current => (vec![side, 0.7 * side].into_iter(), Color::Black),
-            HighlightLevel::Caputreable => (vec![side, 0.7 * side].into_iter(), Color::Red),
-            HighlightLevel::Movable => (vec![side, 0.7 * side].into_iter(), Color::Green),
+        let sides_and_colors = match self.highlight_level {
+            HighlightLevel::None => vec![(side, Color::Black)],
+            HighlightLevel::Current => vec![(side, Color::Black), (0.7 * side, Color::Black)],
+            HighlightLevel::Caputreable => vec![(side, Color::Red), (0.7 * side, Color::Red)],
+            HighlightLevel::Movable => vec![(side, Color::Green), (0.7 * side, Color::Green)],
+            HighlightLevel::Promotable => vec![(side, Color::Blue), (0.7 * side, Color::Blue)],
         };
 
-        for side in sides {
+        sides_and_colors.into_iter().for_each(|(side, color)| {
             let point_e = (x + side, y);
 
             let point_se = (x + (side / 2.), y - side * (3_f64.sqrt() / 2.));
@@ -129,7 +131,7 @@ impl Shape for Cell {
             segment_w_nw.draw(painter);
             segment_nw_ne.draw(painter);
             segment_ne_e.draw(painter);
-        }
+        })
     }
 }
 
@@ -173,7 +175,12 @@ impl Cell {
     pub(crate) fn next_cell(&self, direction: Direction) -> Option<Cell> {
         match direction {
             Direction::Clock1 => {
-                let rank = self.rank.next();
+                let rank = if self.file < File::FileF {
+                    self.rank.next().and_then(|r| r.next())
+                } else {
+                    self.rank.next()
+                };
+
                 let file = self.file.next();
 
                 match (rank, file) {
@@ -182,12 +189,28 @@ impl Cell {
                 }
             }
             Direction::Clock2 => {
+                let rank = if self.file < File::FileF {
+                    self.rank.next()
+                } else {
+                    Some(self.rank)
+                };
+
                 let file = self.file.next();
 
-                file.and_then(|f| Self::try_new(self.rank, f))
+                match (rank, file) {
+                    (Some(r), Some(f)) => Self::try_new(r, f),
+                    _ => None,
+                }
             }
             Direction::Clock3 => {
-                let rank = self.rank.previous();
+                let rank = if self.file == File::FileE {
+                    Some(self.rank)
+                } else if self.file < File::FileF {
+                    self.rank.next()
+                } else {
+                    self.rank.previous()
+                };
+
                 let file = self.file.next().and_then(|f| f.next());
 
                 match (rank, file) {
@@ -196,7 +219,12 @@ impl Cell {
                 }
             }
             Direction::Clock4 => {
-                let rank = self.rank.previous();
+                let rank = if self.file < File::FileF {
+                    Some(self.rank)
+                } else {
+                    self.rank.previous()
+                };
+
                 let file = self.file.next();
 
                 match (rank, file) {
@@ -205,7 +233,12 @@ impl Cell {
                 }
             }
             Direction::Clock5 => {
-                let rank = self.rank.previous().and_then(|r| r.previous());
+                let rank = if self.file < File::FileF {
+                    self.rank.previous()
+                } else {
+                    self.rank.previous().and_then(|r| r.previous())
+                };
+
                 let file = self.file.next();
 
                 match (rank, file) {
@@ -219,7 +252,12 @@ impl Cell {
                 rank.and_then(|r| Self::try_new(r, self.file))
             }
             Direction::Clock7 => {
-                let rank = self.rank.previous().and_then(|r| r.previous());
+                let rank = if self.file > File::FileF {
+                    self.rank.previous()
+                } else {
+                    self.rank.previous().and_then(|r| r.previous())
+                };
+
                 let file = self.file.previous();
 
                 match (rank, file) {
@@ -228,7 +266,12 @@ impl Cell {
                 }
             }
             Direction::Clock8 => {
-                let rank = self.rank.previous();
+                let rank = if self.file > File::FileF {
+                    Some(self.rank)
+                } else {
+                    self.rank.previous()
+                };
+
                 let file = self.file.previous();
 
                 match (rank, file) {
@@ -237,7 +280,13 @@ impl Cell {
                 }
             }
             Direction::Clock9 => {
-                let rank = self.rank.previous();
+                let rank = if self.file == File::FileG {
+                    Some(self.rank)
+                } else if self.file > File::FileF {
+                    self.rank.next()
+                } else {
+                    self.rank.previous()
+                };
                 let file = self.file.previous().and_then(|f| f.previous());
 
                 match (rank, file) {
@@ -246,12 +295,26 @@ impl Cell {
                 }
             }
             Direction::Clock10 => {
+                let rank = if self.file > File::FileF {
+                    self.rank.next()
+                } else {
+                    Some(self.rank)
+                };
+
                 let file = self.file.previous();
 
-                file.and_then(|f| Self::try_new(self.rank, f))
+                match (rank, file) {
+                    (Some(r), Some(f)) => Self::try_new(r, f),
+                    _ => None,
+                }
             }
             Direction::Clock11 => {
-                let rank = self.rank.next();
+                let rank = if self.file > File::FileF {
+                    self.rank.next().and_then(|r| r.next())
+                } else {
+                    self.rank.next()
+                };
+
                 let file = self.file.previous();
 
                 match (rank, file) {

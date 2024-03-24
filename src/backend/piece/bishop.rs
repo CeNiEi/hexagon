@@ -36,7 +36,7 @@ impl Piece for Bishop {
         self.color
     }
 
-    fn valid_moves(&self, cell: &Cell, board: &Board) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board) -> Vec<Move> {
         const DIRECTIONS: [Direction; 6] = [
             Direction::Clock1,
             Direction::Clock3,
@@ -45,6 +45,8 @@ impl Piece for Bishop {
             Direction::Clock9,
             Direction::Clock11,
         ];
+
+        let cell = board.current;
 
         let valid_moves = DIRECTIONS
             .into_iter()

@@ -8,8 +8,8 @@ pub(crate) enum MoveType {
 }
 
 pub(crate) struct Move {
-    move_type: MoveType,
-    cell: Cell,
+    pub(crate) move_type: MoveType,
+    pub(crate) cell: Cell,
 }
 
 impl Move {
