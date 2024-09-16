@@ -38,7 +38,8 @@ impl App {
                     KeyCode::Down | KeyCode::Char('j') => {
                         self.board.move_current(Direction::Clock6)
                     }
-                    KeyCode::Enter => self.board.select_current(),
+                    KeyCode::Enter => self.board.start_move(),
+                    KeyCode::Esc => self.board.abort_move(),
                     _ => {}
                 }
             }

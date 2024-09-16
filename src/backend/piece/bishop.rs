@@ -25,8 +25,8 @@ impl Bishop {
 impl Piece for Bishop {
     fn mark(&self) -> Line<'static> {
         match self.color {
-            Color::Black => "♝",
-            Color::White => "♗",
+            Color::Black => "B",
+            Color::White => "B",
             _ => unreachable!(),
         }
         .into()

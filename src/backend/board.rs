@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, HashSet},
-    fmt::write,
     ops::{Index, IndexMut},
 };
 
@@ -62,6 +61,7 @@ pub(crate) struct Board {
     pub(crate) inner: [[Option<Entry<Box<dyn Piece>>>; 11]; 11],
     pub(crate) current: Cell,
     pub(crate) highlited: Vec<Cell>,
+    pub(crate) move_in_progress: bool,
 }
 
 impl Index<Cell> for Board {
@@ -99,6 +99,7 @@ impl Default for Board {
             inner,
             current: Cell::default(),
             highlited: Vec::new(),
+            move_in_progress: false,
         }
     }
 }
@@ -190,7 +191,9 @@ impl Board {
         board
     }
 
-    pub(crate) fn select_current(&mut self) {
+    pub(crate) fn start_move(&mut self) {
+        self.move_in_progress = true;
+
         self[self.current]
             .occupant()
             .map(|occupant| occupant.valid_moves(&self))
@@ -220,26 +223,36 @@ impl Board {
         }
     }
 
-    fn set_current(&mut self, cell: Cell) {
-        let current = self.current;
-
-        self[current]
-            .cell_mut()
-            .set_highlight_level(super::cell::HighlightLevel::None);
-
+    pub(crate) fn abort_move(&mut self) {
         self.highlited.clone().into_iter().for_each(|cell| {
             self[cell]
                 .cell_mut()
                 .set_highlight_level(super::cell::HighlightLevel::None);
         });
 
+        self.highlited.clear();
+
+        let current_cell = self.current;
+
+        self[current_cell]
+            .cell_mut()
+            .set_highlight_level(super::cell::HighlightLevel::None);
+
+        self.move_in_progress = false;
+    }
+
+    fn set_current(&mut self, cell: Cell) {
+        let current_cell = self.current;
+
+        self[current_cell]
+            .cell_mut()
+            .set_highlight_level(super::cell::HighlightLevel::None);
+
         self[cell]
             .cell_mut()
             .set_highlight_level(super::cell::HighlightLevel::Current);
 
         self.current = cell;
-
-        self.highlited.clear();
     }
 
     pub(crate) fn test_directions(&mut self, direction: Direction) {

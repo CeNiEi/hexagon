@@ -25,8 +25,8 @@ impl King {
 impl Piece for King {
     fn mark(&self) -> Line<'static> {
         match self.color {
-            Color::White => "♔",
-            Color::Black => "♚",
+            Color::White => "K",
+            Color::Black => "K",
             _ => unreachable!(),
         }
         .into()

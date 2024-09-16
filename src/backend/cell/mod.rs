@@ -28,6 +28,8 @@ pub(crate) enum HighlightLevel {
     Current,
     Caputreable,
     Movable,
+    ValidMove,
+    InvalidMove,
 }
 
 #[derive(Clone, Copy, Default, Debug)]
@@ -62,6 +64,7 @@ impl Shape for Cell {
             HighlightLevel::Caputreable => vec![(side, Color::Red), (0.7 * side, Color::Red)],
             HighlightLevel::Movable => vec![(side, Color::Green), (0.7 * side, Color::Green)],
             HighlightLevel::Promotable => vec![(side, Color::Blue), (0.7 * side, Color::Blue)],
+            HighlightLevel::ValidMove | HighlightLevel::InvalidMove => todo!(),
         };
 
         sides_and_colors.into_iter().for_each(|(side, color)| {

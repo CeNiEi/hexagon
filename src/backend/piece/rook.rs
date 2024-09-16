@@ -29,8 +29,8 @@ impl Piece for Rook {
 
     fn mark(&self) -> Line<'static> {
         match self.color {
-            Color::White => "♖",
-            Color::Black => "♜",
+            Color::White => "R",
+            Color::Black => "R",
             _ => unreachable!(),
         }
         .into()

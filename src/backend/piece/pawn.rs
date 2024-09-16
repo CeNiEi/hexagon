@@ -36,8 +36,8 @@ impl Piece for Pawn {
 
     fn mark(&self) -> Line<'static> {
         match self.color {
-            Color::Black => "♟",
-            Color::White => "♙",
+            Color::Black => "P",
+            Color::White => "P",
             _ => unreachable!(),
         }
         .into()

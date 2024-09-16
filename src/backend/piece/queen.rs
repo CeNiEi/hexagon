@@ -29,8 +29,8 @@ impl Piece for Queen {
 
     fn mark(&self) -> Line<'static> {
         match self.color {
-            Color::Black => "♛",
-            Color::White => "♕",
+            Color::Black => "Q",
+            Color::White => "Q",
             _ => unreachable!(),
         }
         .into()

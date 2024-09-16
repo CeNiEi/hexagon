@@ -25,8 +25,8 @@ impl Knight {
 impl Piece for Knight {
     fn mark(&self) -> Line<'static> {
         match self.color {
-            Color::White => "♘",
-            Color::Black => "♞",
+            Color::White => "N",
+            Color::Black => "N",
             _ => unreachable!(),
         }
         .into()
