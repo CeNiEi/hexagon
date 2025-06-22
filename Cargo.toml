@@ -1,10 +1,12 @@
 [package]
 name = "hexagon"
 version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+edition = "2024"
 
 [dependencies]
-crossterm = "0.27.0"
-ratatui = { version = "0.26.0", features = ["unstable-widget-ref"] }
+anyhow = "1.0.98"
+clap = { version = "4.5.40", features = ["derive"] }
+crossterm = "0.29.0"
+num = "0.4.3"
+ratatui = "0.29.0"
+strum = { version = "0.27.1", features = ["derive"] }

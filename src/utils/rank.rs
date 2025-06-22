@@ -1,6 +1,6 @@
 use std::ops::Sub;
 
-use super::{Predecessor, Sucessor};
+use super::Step;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Default, Debug, PartialOrd)]
 pub enum Rank {
@@ -19,14 +19,14 @@ pub enum Rank {
 }
 
 impl Sub for Rank {
-    type Output = i8;
+    type Output = isize;
     fn sub(self, rhs: Self) -> Self::Output {
-        self as i8 - rhs as i8
+        self as isize - rhs as isize
     }
 }
 
-impl Sucessor for Rank {
-    fn next(&self) -> Option<Self> {
+impl Step for Rank {
+    fn succ(&self) -> Option<Self> {
         match self {
             Rank::Rank1 => Some(Rank::Rank2),
             Rank::Rank2 => Some(Rank::Rank3),
@@ -41,10 +41,7 @@ impl Sucessor for Rank {
             Rank::Rank11 => None,
         }
     }
-}
-
-impl Predecessor for Rank {
-    fn previous(&self) -> Option<Self> {
+    fn pred(&self) -> Option<Self> {
         match self {
             Rank::Rank1 => None,
             Rank::Rank2 => Some(Rank::Rank1),

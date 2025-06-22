@@ -1,8 +1,10 @@
 use std::ops::Sub;
 
-use super::{Predecessor, Sucessor};
+use strum::EnumIter;
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Default, Debug, PartialOrd)]
+use super::{Step, range::RangeInc, rank::Rank};
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Default, Debug, PartialOrd, EnumIter)]
 pub enum File {
     FileA,
     FileB,
@@ -19,14 +21,14 @@ pub enum File {
 }
 
 impl Sub for File {
-    type Output = i8;
+    type Output = isize;
     fn sub(self, rhs: Self) -> Self::Output {
-        self as i8 - rhs as i8
+        self as isize - rhs as isize
     }
 }
 
-impl Sucessor for File {
-    fn next(&self) -> Option<Self> {
+impl Step for File {
+    fn succ(&self) -> Option<Self> {
         match self {
             File::FileA => Some(File::FileB),
             File::FileB => Some(File::FileC),
@@ -41,10 +43,8 @@ impl Sucessor for File {
             File::FileL => None,
         }
     }
-}
 
-impl Predecessor for File {
-    fn previous(&self) -> Option<Self> {
+    fn pred(&self) -> Option<Self> {
         match self {
             File::FileA => None,
             File::FileB => Some(File::FileA),
@@ -57,6 +57,24 @@ impl Predecessor for File {
             File::FileI => Some(File::FileH),
             File::FileK => Some(File::FileI),
             File::FileL => Some(File::FileK),
+        }
+    }
+}
+
+impl File {
+    pub(crate) fn rank_range(&self) -> RangeInc<Rank> {
+        match self {
+            File::FileA => RangeInc::new(Rank::Rank1, Rank::Rank6),
+            File::FileB => RangeInc::new(Rank::Rank1, Rank::Rank7),
+            File::FileC => RangeInc::new(Rank::Rank1, Rank::Rank8),
+            File::FileD => RangeInc::new(Rank::Rank1, Rank::Rank9),
+            File::FileE => RangeInc::new(Rank::Rank1, Rank::Rank10),
+            File::FileF => RangeInc::new(Rank::Rank1, Rank::Rank11),
+            File::FileG => RangeInc::new(Rank::Rank1, Rank::Rank10),
+            File::FileH => RangeInc::new(Rank::Rank1, Rank::Rank9),
+            File::FileI => RangeInc::new(Rank::Rank1, Rank::Rank8),
+            File::FileK => RangeInc::new(Rank::Rank1, Rank::Rank7),
+            File::FileL => RangeInc::new(Rank::Rank1, Rank::Rank6),
         }
     }
 }

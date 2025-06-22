@@ -1,18 +1,26 @@
-use frontend::{app::App, tui::Tui};
+use app::App;
 
-pub(crate) mod backend;
-pub(crate) mod frontend;
+mod app;
+mod board;
+mod hexagon;
+mod pieces;
+mod unit;
+mod utils;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut app = App::new();
+use anyhow::Result;
+use clap::Parser;
 
-    let mut tui = Tui::new()?;
-    tui.enter()?;
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+struct Cli {
+    #[arg(short, long, value_name = "LEN")]
+    len: Option<f64>,
+}
 
-    while !app.terminate {
-        tui.draw(&mut app)?;
-        app.handle_events()?;
-    }
-
-    Ok(())
+fn main() -> Result<()> {
+    let cli = Cli::parse();
+    let mut terminal = ratatui::init();
+    let res = App::new(cli.len.unwrap_or(3.)).run(&mut terminal);
+    ratatui::restore();
+    res
 }
