@@ -9,18 +9,22 @@ use ratatui::{
 
 use anyhow::Result;
 
-use crate::{board::Board, utils::direction::Direction};
+use crate::{
+    board::Board,
+    pieces::Piece,
+    utils::{color_mode::ColorMode, depth::Depth, direction::Direction},
+};
 
 pub struct App {
     terminate: bool,
-    board: Board<()>,
+    board: Board<Box<dyn Piece>>,
 }
 
 impl App {
-    pub fn new(len: f64) -> App {
+    pub fn new(len: f64, padding: f64, depth: Depth, color_mode: ColorMode) -> App {
         Self {
             terminate: false,
-            board: Board::new(len),
+            board: Board::new(len, padding, depth, color_mode),
         }
     }
 
@@ -42,11 +46,13 @@ impl App {
         }
 
         match key.code {
-            KeyCode::Char('q') | KeyCode::Esc => self.terminate = true,
+            KeyCode::Char('q') => self.terminate = true,
             KeyCode::Left => self.board.move_current(Direction::Clock10),
             KeyCode::Right => self.board.move_current(Direction::Clock2),
             KeyCode::Up => self.board.move_current(Direction::Clock12),
             KeyCode::Down => self.board.move_current(Direction::Clock6),
+            KeyCode::Enter => self.board.start_move(),
+            KeyCode::Esc => self.board.abort_move(),
             _ => {}
         }
     }

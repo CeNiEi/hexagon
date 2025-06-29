@@ -2,7 +2,7 @@ use std::ops::Sub;
 
 use super::Step;
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Default, Debug, PartialOrd)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Default, Debug, PartialOrd, Ord)]
 pub enum Rank {
     Rank1,
     Rank2,

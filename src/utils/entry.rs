@@ -24,12 +24,20 @@ impl<P> Entry<P> {
         &self.hex
     }
 
+    pub(crate) fn is_occupied(&self) -> bool {
+        self.occupant.is_some()
+    }
+
     pub(crate) fn hex_mut(&mut self) -> &mut Hexagon {
         &mut self.hex
     }
 
     pub(crate) fn occupant(&self) -> Option<&P> {
         self.occupant.as_ref()
+    }
+
+    pub(crate) fn set_occupant(&mut self, occupant: P) {
+        self.occupant = Some(occupant);
     }
 
     pub(crate) fn occupant_mut(&mut self) -> Option<&mut P> {

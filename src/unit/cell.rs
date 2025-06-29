@@ -1,7 +1,7 @@
 use crate::utils::{Step, direction::Direction, file::File, range::Range, rank::Rank};
 use anyhow::{Result, anyhow};
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub(crate) struct Cell {
     pub(crate) rank: Rank,
     pub(crate) file: File,
@@ -27,15 +27,12 @@ impl Cell {
         }
     }
 
-    pub(crate) fn new(rank: Rank, file: File) -> Self {
-        Self::try_new(rank, file).unwrap()
+    pub(crate) const unsafe fn from_raw_parts(rank: Rank, file: File) -> Self {
+        Self { rank, file }
     }
 
-    //TODO: OPTIMISE
-    pub(crate) fn to_board_index(&self) -> usize {
-        (Range::new(File::FileA, self.file)
-            .fold(0, |accum, file| accum + file.rank_range().remaning())
-            + (self.rank - Rank::Rank1)) as usize
+    pub(crate) fn new(rank: Rank, file: File) -> Self {
+        Self::try_new(rank, file).unwrap()
     }
 
     pub(crate) fn next(&self, direction: Direction) -> Option<Self> {
@@ -172,21 +169,21 @@ impl Cell {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use strum::IntoEnumIterator;
-
-    use crate::utils::file::File;
-
-    use super::Cell;
-
-    #[test]
-    fn test_board_idx() {
-        assert!(
-            File::iter()
-                .flat_map(|file| file.rank_range().map(move |rank| Cell::new(rank, file)))
-                .enumerate()
-                .all(|(idx, cell)| idx == cell.to_board_index())
-        )
-    }
-}
+// #[cfg(test)]
+// mod tests {
+//     use strum::IntoEnumIterator;
+//
+//     use crate::utils::file::File;
+//
+//     use super::Cell;
+//
+//     #[test]
+//     fn test_board_idx() {
+//         assert!(
+//             File::iter()
+//                 .flat_map(|file| file.rank_range().map(move |rank| Cell::new(rank, file)))
+//                 .enumerate()
+//                 .all(|(idx, cell)| idx == cell.to_board_index())
+//         )
+//     }
+// }

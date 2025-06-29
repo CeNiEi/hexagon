@@ -18,6 +18,26 @@ impl<T> RangeInc<T> {
     }
 }
 
+impl<T: Copy> RangeInc<T> {
+    pub(crate) fn lo(&self) -> T {
+        self.lo
+    }
+
+    pub(crate) fn hi(&self) -> T {
+        self.hi
+    }
+}
+
+impl<T: Ord + Copy> RangeInc<T> {
+    pub(crate) fn clamp(&self, rhs: RangeInc<T>) -> RangeInc<T> {
+        RangeInc {
+            ended: self.ended,
+            lo: self.lo.max(rhs.lo),
+            hi: self.hi.min(rhs.hi),
+        }
+    }
+}
+
 impl<T: Sub<Output = isize> + Copy> RangeInc<T> {
     pub(crate) fn remaning(&self) -> isize {
         self.hi - self.lo + 1
