@@ -42,7 +42,7 @@ impl Piece for Rook {
         self.color
     }
 
-    fn valid_moves(&self, board: &Board<Box<dyn Piece>>) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board<Box<dyn Piece>>, current: Cell) -> Vec<Move> {
         const ALLOWED_DIRECTIONS: [Direction; 6] = [
             Direction::Clock2,
             Direction::Clock4,
@@ -52,11 +52,9 @@ impl Piece for Rook {
             Direction::Clock12,
         ];
 
-        let cell = board.current;
-
         let valid_moves = ALLOWED_DIRECTIONS
             .into_iter()
-            .flat_map(|direction| single_direction_moves(cell, self.color, direction, board))
+            .flat_map(|direction| single_direction_moves(current, self.color, direction, board))
             .collect::<Vec<_>>();
 
         valid_moves

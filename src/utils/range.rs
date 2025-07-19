@@ -16,31 +16,44 @@ impl<T> RangeInc<T> {
             ended: false,
         }
     }
-}
 
-impl<T: Copy> RangeInc<T> {
-    pub(crate) fn lo(&self) -> T {
+    pub(crate) fn lo(&self) -> T
+    where
+        T: Copy,
+    {
         self.lo
     }
 
-    pub(crate) fn hi(&self) -> T {
+    pub(crate) fn hi(&self) -> T
+    where
+        T: Copy,
+    {
         self.hi
     }
-}
 
-impl<T: Ord + Copy> RangeInc<T> {
-    pub(crate) fn clamp(&self, rhs: RangeInc<T>) -> RangeInc<T> {
+    pub(crate) fn clamp(&self, rhs: RangeInc<T>) -> RangeInc<T>
+    where
+        T: Copy + Ord,
+    {
         RangeInc {
             ended: self.ended,
             lo: self.lo.max(rhs.lo),
             hi: self.hi.min(rhs.hi),
         }
     }
-}
 
-impl<T: Sub<Output = isize> + Copy> RangeInc<T> {
-    pub(crate) fn remaning(&self) -> isize {
+    pub(crate) fn remaning(&self) -> isize
+    where
+        T: Copy + Sub<Output = isize>,
+    {
         self.hi - self.lo + 1
+    }
+
+    pub(crate) fn contains(&self, val: T) -> bool
+    where
+        T: PartialOrd,
+    {
+        self.lo <= val && val <= self.hi
     }
 }
 
@@ -85,10 +98,11 @@ impl<T> Range<T> {
             ended: false,
         }
     }
-}
 
-impl<T: Sub<Output = isize> + Copy> Range<T> {
-    pub(crate) fn remaning(&self) -> isize {
+    pub(crate) fn remaning(&self) -> isize
+    where
+        T: Copy + Sub<Output = isize>,
+    {
         self.hi - self.lo
     }
 }

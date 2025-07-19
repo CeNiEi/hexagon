@@ -5,7 +5,14 @@ use ratatui::{
 
 use crate::{
     unit::{UnitHexagon, cell::Cell},
-    utils::{Mode, color_mode::ColorMode, delta::Delta, file::File, rank::Rank},
+    utils::{
+        delta::Delta,
+        file::File,
+        fill_mode::FillMode,
+        mode::{HighlightMode, Status},
+        rank::Rank,
+        stack::Stack,
+    },
 };
 
 use anyhow::Result;
@@ -14,9 +21,9 @@ use anyhow::Result;
 pub(crate) struct Hexagon {
     unit: UnitHexagon,
     len: f64,
-    mode: Mode,
+    mode: HighlightMode,
     color: Color,
-    color_mode: ColorMode,
+    fill_mode: FillMode,
     padding: f64,
 }
 
@@ -26,18 +33,18 @@ impl Hexagon {
         file: File,
         len: f64,
         padding: f64,
-        mode: Mode,
         color: Color,
-        color_mode: ColorMode,
+        color_mode: FillMode,
+        highlight_mode: HighlightMode,
     ) -> Result<Self> {
         let unit = UnitHexagon::try_new(rank, file)?;
 
         Ok(Self {
             unit,
             len,
-            mode,
             color,
-            color_mode,
+            mode: highlight_mode,
+            fill_mode: color_mode,
             padding,
         })
     }
@@ -54,8 +61,12 @@ impl Hexagon {
         self.unit.cell()
     }
 
-    pub(crate) fn set_mode(&mut self, mode: Mode) {
-        self.mode = mode;
+    pub(crate) fn set_current(&mut self, current: bool) {
+        self.mode.set_current(current);
+    }
+
+    pub(crate) fn set_status(&mut self, status: Status) {
+        self.mode.set_status(status);
     }
 
     pub(crate) fn new(
@@ -63,11 +74,11 @@ impl Hexagon {
         file: File,
         len: f64,
         padding: f64,
-        mode: Mode,
         color: Color,
-        color_mode: ColorMode,
+        color_mode: FillMode,
+        highlight_mode: HighlightMode,
     ) -> Self {
-        Self::try_new(rank, file, len, padding, mode, color, color_mode).unwrap()
+        Self::try_new(rank, file, len, padding, color, color_mode, highlight_mode).unwrap()
     }
 
     pub(crate) fn center(&self) -> Delta<f64> {
@@ -106,7 +117,7 @@ impl Hexagon {
             y1: point_e.y,
             x2: point_se.x,
             y2: point_se.y,
-            color: self.mode.color(),
+            color: self.color,
         }
     }
 
@@ -119,7 +130,7 @@ impl Hexagon {
             y1: point_se.y,
             x2: point_sw.x,
             y2: point_sw.y,
-            color: self.mode.color(),
+            color: self.color,
         }
     }
 
@@ -132,7 +143,7 @@ impl Hexagon {
             y1: point_sw.y,
             x2: point_w.x,
             y2: point_w.y,
-            color: self.mode.color(),
+            color: self.color,
         }
     }
 
@@ -145,7 +156,7 @@ impl Hexagon {
             y1: point_w.y,
             x2: point_nw.x,
             y2: point_nw.y,
-            color: self.mode.color(),
+            color: self.color,
         }
     }
 
@@ -158,7 +169,7 @@ impl Hexagon {
             y1: point_nw.y,
             x2: point_ne.x,
             y2: point_ne.y,
-            color: self.mode.color(),
+            color: self.color,
         }
     }
 
@@ -171,13 +182,9 @@ impl Hexagon {
             y1: point_ne.y,
             x2: point_e.x,
             y2: point_e.y,
-            color: self.mode.color(),
+            color: self.color,
         }
     }
-
-    // fn draw_helper(&self, painter: &mut Painter) {
-    //     self.draw_inner(painter);
-    // }
 
     fn draw_boundaries(&self, painter: &mut Painter) {
         let segment_e_se = self.segment_e_se();
@@ -234,11 +241,6 @@ impl Hexagon {
             .all(|cross| cross <= 0.0)
     }
 
-    // fn draw_inner(&self, painter: &mut Painter) {
-    //     self.draw_filled(painter);
-    //     self.draw_boundaries(painter);
-    // }
-
     fn draw_filled(&self, painter: &mut Painter) {
         let (min_x, max_x) = (self.point_w().x, self.point_e().x);
         let (min_y, max_y) = (self.point_se().y, self.point_ne().y);
@@ -263,39 +265,107 @@ impl Hexagon {
         }
     }
 
-    // fn draw_capturable_hint(&self, painter: &mut Painter) {
-    //     let hex = Hexagon::new(self.rank(), self.file(), self.len / 1.5, self.mode);
-    //     hex.draw_inner(painter);
-    // }
+    fn draw_filled_alt(&self, painter: &mut Painter) {
+        let mut len = self.len;
 
-    // fn draw_movable_hint(&self, painter: &mut Painter) {
-    //     let center = self.center();
-    //
-    //     let circle = Circle {
-    //         x: center.x,
-    //         y: center.y,
-    //         radius: self.len / 1.5,
-    //         color: self.mode.color(),
-    //     };
-    //
-    //     circle.draw(painter);
-    // }
+        const STEP: f64 = 0.1;
+
+        while len > 0. {
+            let hex = Hexagon::new(
+                self.rank(),
+                self.file(),
+                len,
+                1.,
+                self.color,
+                FillMode::default(),
+                HighlightMode::default(),
+            );
+
+            hex.draw_boundaries(painter);
+            len -= STEP;
+        }
+    }
+
+    fn draw_highlights(&self, painter: &mut Painter) {
+        match self.mode.current() {
+            true => {
+                let hex = Hexagon::new(
+                    self.rank(),
+                    self.file(),
+                    self.len,
+                    1.,
+                    Color::White,
+                    FillMode::default(),
+                    HighlightMode::default(),
+                );
+
+                hex.draw_boundaries(painter);
+            }
+            false => match self.mode.status() {
+                Status::Capturable => {
+                    let hex = Hexagon::new(
+                        self.rank(),
+                        self.file(),
+                        self.len,
+                        1.,
+                        Color::Red,
+                        FillMode::default(),
+                        HighlightMode::default(),
+                    );
+
+                    hex.draw_boundaries(painter);
+                }
+                Status::Movable => {
+                    let hex = Hexagon::new(
+                        self.rank(),
+                        self.file(),
+                        self.len,
+                        1.,
+                        Color::Blue,
+                        FillMode::default(),
+                        HighlightMode::default(),
+                    );
+
+                    hex.draw_boundaries(painter);
+                }
+                Status::None => {}
+            },
+        }
+    }
 }
 
-impl Shape for Hexagon {
+pub(crate) struct HexagonBase(Hexagon);
+
+impl Shape for HexagonBase {
     fn draw(&self, painter: &mut Painter) {
-        match self.color_mode {
-            ColorMode::Filled => {
-                self.draw_filled(painter);
+        match self.0.fill_mode {
+            FillMode::Filled => {
+                self.0.draw_filled(painter);
             }
-            ColorMode::Wireframe => {
-                self.draw_boundaries(painter);
-            }
-            ColorMode::Both => {
-                self.draw_filled(painter);
-                self.draw_boundaries(painter);
+            FillMode::Wireframe => {
+                self.0.draw_boundaries(painter);
             }
         }
+    }
+}
+
+impl From<Hexagon> for HexagonBase {
+    fn from(value: Hexagon) -> Self {
+        Self(value)
+    }
+}
+
+pub(crate) struct HexagonHighlights(Hexagon);
+
+impl Shape for HexagonHighlights {
+    fn draw(&self, painter: &mut Painter) {
+        self.0.draw_highlights(painter);
+    }
+}
+
+impl From<Hexagon> for HexagonHighlights {
+    fn from(value: Hexagon) -> Self {
+        Self(value)
     }
 }
 

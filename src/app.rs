@@ -12,19 +12,36 @@ use anyhow::Result;
 use crate::{
     board::Board,
     pieces::Piece,
-    utils::{color_mode::ColorMode, depth::Depth, direction::Direction},
+    state::State,
+    utils::{depth::Depth, direction::Direction, fill_mode::FillMode},
 };
 
 pub struct App {
     terminate: bool,
     board: Board<Box<dyn Piece>>,
+    state: State,
 }
 
 impl App {
-    pub fn new(len: f64, padding: f64, depth: Depth, color_mode: ColorMode) -> App {
+    pub fn new(
+        len: f64,
+        padding: f64,
+        depth: Depth,
+        color_mode: FillMode,
+        hide_pieces: bool,
+        hide_highlights: bool,
+    ) -> App {
         Self {
             terminate: false,
-            board: Board::new(len, padding, depth, color_mode),
+            board: Board::new(
+                len,
+                padding,
+                depth,
+                color_mode,
+                hide_pieces,
+                hide_highlights,
+            ),
+            state: State::default(),
         }
     }
 
@@ -47,12 +64,11 @@ impl App {
 
         match key.code {
             KeyCode::Char('q') => self.terminate = true,
-            KeyCode::Left => self.board.move_current(Direction::Clock10),
-            KeyCode::Right => self.board.move_current(Direction::Clock2),
-            KeyCode::Up => self.board.move_current(Direction::Clock12),
-            KeyCode::Down => self.board.move_current(Direction::Clock6),
-            KeyCode::Enter => self.board.start_move(),
-            KeyCode::Esc => self.board.abort_move(),
+            KeyCode::Left => self.state.move_current(&mut self.board, Direction::Clock10),
+            KeyCode::Right => self.state.move_current(&mut self.board, Direction::Clock2),
+            KeyCode::Up => self.state.move_current(&mut self.board, Direction::Clock12),
+            KeyCode::Down => self.state.move_current(&mut self.board, Direction::Clock6),
+            KeyCode::Enter => self.state.toggle_valid_moves(&mut self.board),
             _ => {}
         }
     }

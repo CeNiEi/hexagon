@@ -41,7 +41,7 @@ impl Piece for Knight {
         self.color
     }
 
-    fn valid_moves(&self, board: &Board<Box<dyn Piece>>) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board<Box<dyn Piece>>, current: Cell) -> Vec<Move> {
         const DIRECTIONS: [Direction; 6] = [
             Direction::Clock2,
             Direction::Clock4,
@@ -51,12 +51,10 @@ impl Piece for Knight {
             Direction::Clock12,
         ];
 
-        let cell = board.current;
-
         let valid_moves = DIRECTIONS
             .into_iter()
             .flat_map(|direction| {
-                let Some((position_a, position_b)) = cell
+                let Some((position_a, position_b)) = current
                     .next(direction)
                     .map(|next| next.next(direction))
                     .flatten()

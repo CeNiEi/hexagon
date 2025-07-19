@@ -92,19 +92,17 @@ impl Piece for Pawn {
         self.color
     }
 
-    fn valid_moves(&self, board: &Board<Box<dyn Piece>>) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board<Box<dyn Piece>>, current: Cell) -> Vec<Move> {
         let forward_direction = match self.color {
             Color::White => Direction::Clock12,
             Color::Black => Direction::Clock6,
             _ => unreachable!(),
         };
 
-        let cell = board.current;
-
         let at_starting_pos = if self.color == Color::White {
-            WHITE_PAWN_STARTING_CELLS.contains(&cell)
+            WHITE_PAWN_STARTING_CELLS.contains(&current)
         } else {
-            BLACK_PAWN_STARTING_CELLS.contains(&cell)
+            BLACK_PAWN_STARTING_CELLS.contains(&current)
         };
 
         let num_steps_allowed = if at_starting_pos { 2 } else { 1 };
@@ -116,7 +114,7 @@ impl Piece for Pawn {
         }
 
         let non_capture_moves =
-            std::iter::successors(cell.next(forward_direction), |current_cell| {
+            std::iter::successors(current.next(forward_direction), |current_cell| {
                 current_cell.next(forward_direction)
             })
             .take(num_steps_allowed)
@@ -136,8 +134,8 @@ impl Piece for Pawn {
             .map(|cell| PawnMove::NonCapture(cell));
 
         let capture_moves = [
-            cell.next(forward_direction.turn_clockwise()),
-            cell.next(forward_direction.turn_counter_clockwise()),
+            current.next(forward_direction.turn_clockwise()),
+            current.next(forward_direction.turn_counter_clockwise()),
         ]
         .into_iter()
         .filter_map(|position| {

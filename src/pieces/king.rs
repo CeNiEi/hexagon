@@ -37,7 +37,7 @@ impl Piece for King {
         self.color
     }
 
-    fn valid_moves(&self, board: &Board<Box<dyn Piece>>) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board<Box<dyn Piece>>, current: Cell) -> Vec<Move> {
         const DIRECTIONS: [Direction; 12] = [
             Direction::Clock1,
             Direction::Clock2,
@@ -53,12 +53,10 @@ impl Piece for King {
             Direction::Clock12,
         ];
 
-        let cell = board.current;
-
         let valid_moves = DIRECTIONS
             .into_iter()
             .filter_map(|direction| {
-                let Some(next_cell) = cell.next(direction) else {
+                let Some(next_cell) = current.next(direction) else {
                     return None;
                 };
 
