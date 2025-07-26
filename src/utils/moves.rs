@@ -54,7 +54,7 @@ pub(crate) fn single_direction_moves(
     cell: Cell,
     color: Color,
     direction: Direction,
-    board: &Board<Box<dyn Piece>>,
+    board: &Board ,
 ) -> Vec<Move> {
     std::iter::successors(cell.next(direction), |current_cell: &Cell| {
         current_cell.next(direction)

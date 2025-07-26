@@ -5,6 +5,7 @@ use crate::{
     utils::{
         direction::Direction,
         file::File,
+        mark::Mark,
         moves::{MoveType, RestMoveType},
         rank::Rank,
     },
@@ -33,15 +34,15 @@ pub(crate) const BLACK_KNIGHT_STARTING_CELLS: [Cell; 2] = [
 ];
 
 impl Piece for Knight {
-    fn mark(&self) -> &'static str {
-        "N"
+    fn ty(&self) -> super::PieceType {
+        super::PieceType::Knight
     }
 
     fn color(&self) -> Color {
         self.color
     }
 
-    fn valid_moves(&self, board: &Board<Box<dyn Piece>>, current: Cell) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board , current: Cell) -> Vec<Move> {
         const DIRECTIONS: [Direction; 6] = [
             Direction::Clock2,
             Direction::Clock4,

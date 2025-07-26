@@ -61,6 +61,10 @@ impl Hexagon {
         self.unit.cell()
     }
 
+    pub(crate) fn len(&self) -> f64 {
+        self.len
+    }
+
     pub(crate) fn set_current(&mut self, current: bool) {
         self.mode.set_current(current);
     }
@@ -286,7 +290,7 @@ impl Hexagon {
         }
     }
 
-    fn draw_highlights(&self, painter: &mut Painter) {
+    pub(crate) fn draw_highlights(&self, painter: &mut Painter) {
         match self.mode.current() {
             true => {
                 let hex = Hexagon::new(
@@ -332,42 +336,53 @@ impl Hexagon {
             },
         }
     }
-}
 
-pub(crate) struct HexagonBase(Hexagon);
-
-impl Shape for HexagonBase {
-    fn draw(&self, painter: &mut Painter) {
-        match self.0.fill_mode {
+    pub(crate) fn draw_base(&self, painter: &mut Painter) {
+        match self.fill_mode {
             FillMode::Filled => {
-                self.0.draw_filled(painter);
+                self.draw_filled(painter);
             }
             FillMode::Wireframe => {
-                self.0.draw_boundaries(painter);
+                self.draw_boundaries(painter);
             }
         }
     }
 }
 
-impl From<Hexagon> for HexagonBase {
-    fn from(value: Hexagon) -> Self {
-        Self(value)
-    }
-}
-
-pub(crate) struct HexagonHighlights(Hexagon);
-
-impl Shape for HexagonHighlights {
-    fn draw(&self, painter: &mut Painter) {
-        self.0.draw_highlights(painter);
-    }
-}
-
-impl From<Hexagon> for HexagonHighlights {
-    fn from(value: Hexagon) -> Self {
-        Self(value)
-    }
-}
+// pub(crate) struct HexagonBase(Hexagon);
+//
+// impl Shape for HexagonBase {
+//     fn draw(&self, painter: &mut Painter) {
+//         match self.0.fill_mode {
+//             FillMode::Filled => {
+//                 self.0.draw_filled(painter);
+//             }
+//             FillMode::Wireframe => {
+//                 self.0.draw_boundaries(painter);
+//             }
+//         }
+//     }
+// }
+//
+// impl From<Hexagon> for HexagonBase {
+//     fn from(value: Hexagon) -> Self {
+//         Self(value)
+//     }
+// }
+//
+// pub(crate) struct HexagonHighlights(Hexagon);
+//
+// impl Shape for HexagonHighlights {
+//     fn draw(&self, painter: &mut Painter) {
+//         self.0.draw_highlights(painter);
+//     }
+// }
+//
+// impl From<Hexagon> for HexagonHighlights {
+//     fn from(value: Hexagon) -> Self {
+//         Self(value)
+//     }
+// }
 
 // pub(crate) struct HexagonFiller(Hexagon);
 //

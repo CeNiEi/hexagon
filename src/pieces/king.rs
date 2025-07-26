@@ -5,6 +5,7 @@ use crate::{
     utils::{
         direction::Direction,
         file::File,
+        mark::Mark,
         moves::{MoveType, RestMoveType},
         rank::Rank,
     },
@@ -29,15 +30,15 @@ pub(crate) const BLACK_KING_STARTING_LOCATION: Cell =
     unsafe { Cell::from_raw_parts(Rank::Rank10, File::FileG) };
 
 impl Piece for King {
-    fn mark(&self) -> &'static str {
-        "K"
+    fn ty(&self) -> super::PieceType {
+        super::PieceType::King
     }
 
     fn color(&self) -> Color {
         self.color
     }
 
-    fn valid_moves(&self, board: &Board<Box<dyn Piece>>, current: Cell) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board , current: Cell) -> Vec<Move> {
         const DIRECTIONS: [Direction; 12] = [
             Direction::Clock1,
             Direction::Clock2,

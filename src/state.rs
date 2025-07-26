@@ -21,7 +21,7 @@ impl State {
         self.turn = self.turn.toggle()
     }
 
-    pub(crate) fn set_current<P>(&mut self, board: &mut Board<P>, cell: Cell) {
+    pub(crate) fn set_current(&mut self, board: &mut Board, cell: Cell) {
         let current_cell = self.current;
 
         board[current_cell].hex_mut().set_current(false);
@@ -30,7 +30,7 @@ impl State {
         self.current = cell;
     }
 
-    pub(crate) fn move_current<P>(&mut self, board: &mut Board<P>, direction: Direction) {
+    pub(crate) fn move_current(&mut self, board: &mut Board, direction: Direction) {
         let next = board.next(self.current, direction);
 
         if let Some(next) = next {
@@ -38,7 +38,7 @@ impl State {
         }
     }
 
-    pub(crate) fn toggle_valid_moves(&mut self, board: &mut Board<Box<dyn Piece>>) {
+    pub(crate) fn toggle_valid_moves(&mut self, board: &mut Board) {
         match self.displaying_valid_moves {
             Some(cell) => {
                 self.hide_valid_moves(cell, board);
@@ -49,7 +49,7 @@ impl State {
         }
     }
 
-    fn hide_valid_moves(&mut self, cell: Cell, board: &mut Board<Box<dyn Piece>>) {
+    fn hide_valid_moves(&mut self, cell: Cell, board: &mut Board) {
         let Some(occupant) = board[cell].occupant() else {
             return;
         };
@@ -79,7 +79,7 @@ impl State {
         self.displaying_valid_moves = None;
     }
 
-    fn show_valid_moves(&mut self, board: &mut Board<Box<dyn Piece>>) {
+    fn show_valid_moves(&mut self, board: &mut Board) {
         let Some(occupant) = board[self.current].occupant() else {
             return;
         };

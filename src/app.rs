@@ -18,7 +18,7 @@ use crate::{
 
 pub struct App {
     terminate: bool,
-    board: Board<Box<dyn Piece>>,
+    board: Board ,
     state: State,
 }
 

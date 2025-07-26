@@ -15,7 +15,7 @@ use utils::{fill_mode::FillMode, depth::Depth};
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Cli {
-    #[arg(short, long, value_name = "LEN", default_value_t = 3.)]
+    #[arg(short, long, value_name = "LEN", default_value_t = 6.)]
     len: f64,
 
     #[arg(short, long, value_name = "PADDING", default_value_t = 0.8)]
@@ -35,7 +35,7 @@ struct Cli {
         long, 
         value_name = "COLOR_MODE", 
         value_enum,
-        default_value_t = FillMode::Filled
+        default_value_t = FillMode::Wireframe
     )]
     color_mode: FillMode,
 
@@ -69,7 +69,6 @@ fn setup_logger() -> Result<()> {
 }
 
 fn main() -> Result<()> {
-
     let cli = Cli::parse();
 
     if cli.logging {

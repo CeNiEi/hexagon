@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::{
-    hexagon::{Hexagon, HexagonBase, HexagonHighlights},
+    hexagon::Hexagon,
     pieces::{
         Piece,
         bishop::{BLACK_BISHOP_STARTING_CELLS, Bishop, WHITE_BISHOP_STARTING_CELLS},
@@ -24,6 +24,7 @@ use crate::{
         entry::Entry,
         file::File,
         fill_mode::FillMode,
+        mark::Mark,
         mode::{HighlightMode, Status},
         moves::{Move, MoveType, PawnMoveType, RestMoveType},
         range::Range,
@@ -34,7 +35,10 @@ use crate::{
 use ratatui::{
     style::{Color, Style, Stylize},
     text::Line,
-    widgets::{Block, Borders, Widget, canvas::Canvas},
+    widgets::{
+        Block, Borders, Widget,
+        canvas::{Canvas, Shape},
+    },
 };
 use strum::IntoEnumIterator;
 
@@ -44,27 +48,27 @@ pub(crate) const TONE_HEX_BG3: Color = Color::LightGreen;
 
 pub(crate) const TONE_CANVAS_BG: Color = Color::Black;
 
-pub(crate) struct Board<P> {
-    inner: Vec<Entry<P>>,
+pub(crate) struct Board {
+    inner: Vec<Entry>,
     depth: Depth,
 
     hide_highlights: bool,
 }
 
-impl<P> Index<Cell> for Board<P> {
-    type Output = Entry<P>;
+impl Index<Cell> for Board {
+    type Output = Entry;
     fn index(&self, index: Cell) -> &Self::Output {
         self.get(index).unwrap()
     }
 }
 
-impl<P> IndexMut<Cell> for Board<P> {
+impl IndexMut<Cell> for Board {
     fn index_mut(&mut self, index: Cell) -> &mut Self::Output {
         self.get_mut(index).unwrap()
     }
 }
 
-impl Board<Box<dyn Piece>> {
+impl Board {
     fn empty(
         len: f64,
         padding: f64,
@@ -101,7 +105,7 @@ impl Board<Box<dyn Piece>> {
                             ),
                         );
 
-                        Entry::new(hex, None)
+                        Entry::new(hex, None, hide_highlights)
                     })
             })
             .collect();
@@ -124,49 +128,45 @@ impl Board<Box<dyn Piece>> {
         let mut board = Self::empty(len, padding, depth, fill_mode, hide_highlights);
 
         if !hide_pieces {
-            WHITE_BISHOP_STARTING_CELLS.into_iter().for_each(|cell| {
-                board[cell].set_occupant(Box::new(Bishop::new(Color::White)) as Box<dyn Piece>)
-            });
+            WHITE_BISHOP_STARTING_CELLS
+                .into_iter()
+                .for_each(|cell| board[cell].set_occupant(Bishop::new(Color::White)));
 
-            BLACK_BISHOP_STARTING_CELLS.into_iter().for_each(|cell| {
-                board[cell].set_occupant(Box::new(Bishop::new(Color::Black)) as Box<dyn Piece>)
-            });
+            BLACK_BISHOP_STARTING_CELLS
+                .into_iter()
+                .for_each(|cell| board[cell].set_occupant(Bishop::new(Color::Black)));
 
-            board[WHITE_KING_STARTING_LOCATION]
-                .set_occupant(Box::new(King::new(Color::White)) as Box<dyn Piece>);
+            board[WHITE_KING_STARTING_LOCATION].set_occupant(King::new(Color::White));
 
-            board[BLACK_KING_STARTING_LOCATION]
-                .set_occupant(Box::new(King::new(Color::Black)) as Box<dyn Piece>);
+            board[BLACK_KING_STARTING_LOCATION].set_occupant(King::new(Color::Black));
 
-            board[WHITE_QUEEN_STARTING_LOCATION]
-                .set_occupant(Box::new(Queen::new(Color::White)) as Box<dyn Piece>);
+            board[WHITE_QUEEN_STARTING_LOCATION].set_occupant(Queen::new(Color::White));
 
-            board[BLACK_QUEEN_STARTING_LOCATION]
-                .set_occupant(Box::new(Queen::new(Color::Black)) as Box<dyn Piece>);
+            board[BLACK_QUEEN_STARTING_LOCATION].set_occupant(Queen::new(Color::Black));
 
-            WHITE_ROOK_STARTING_CELLS.into_iter().for_each(|cell| {
-                board[cell].set_occupant(Box::new(Rook::new(Color::White)) as Box<dyn Piece>)
-            });
+            WHITE_ROOK_STARTING_CELLS
+                .into_iter()
+                .for_each(|cell| board[cell].set_occupant(Rook::new(Color::White)));
 
-            BLACK_ROOK_STARTING_CELLS.into_iter().for_each(|cell| {
-                board[cell].set_occupant(Box::new(Rook::new(Color::Black)) as Box<dyn Piece>)
-            });
+            BLACK_ROOK_STARTING_CELLS
+                .into_iter()
+                .for_each(|cell| board[cell].set_occupant(Rook::new(Color::Black)));
 
-            WHITE_KNIGHT_STARTING_CELLS.into_iter().for_each(|cell| {
-                board[cell].set_occupant(Box::new(Knight::new(Color::White)) as Box<dyn Piece>)
-            });
+            WHITE_KNIGHT_STARTING_CELLS
+                .into_iter()
+                .for_each(|cell| board[cell].set_occupant(Knight::new(Color::White)));
 
-            BLACK_KNIGHT_STARTING_CELLS.into_iter().for_each(|cell| {
-                board[cell].set_occupant(Box::new(Knight::new(Color::Black)) as Box<dyn Piece>)
-            });
+            BLACK_KNIGHT_STARTING_CELLS
+                .into_iter()
+                .for_each(|cell| board[cell].set_occupant(Knight::new(Color::Black)));
 
-            WHITE_PAWN_STARTING_CELLS.into_iter().for_each(|cell| {
-                board[cell].set_occupant(Box::new(Pawn::new(Color::White)) as Box<dyn Piece>)
-            });
+            WHITE_PAWN_STARTING_CELLS
+                .into_iter()
+                .for_each(|cell| board[cell].set_occupant(Pawn::new(Color::White)));
 
-            BLACK_PAWN_STARTING_CELLS.into_iter().for_each(|cell| {
-                board[cell].set_occupant(Box::new(Pawn::new(Color::Black)) as Box<dyn Piece>)
-            });
+            BLACK_PAWN_STARTING_CELLS
+                .into_iter()
+                .for_each(|cell| board[cell].set_occupant(Pawn::new(Color::Black)));
         }
 
         board
@@ -200,7 +200,7 @@ impl Board<Box<dyn Piece>> {
     // }
 }
 
-impl<P> Board<P> {
+impl Board {
     //TODO: OPTIMISE
     fn board_index(&self, cell: Cell) -> usize {
         (Range::new(self.depth.first_file(), cell.file).fold(0, |accum, file| {
@@ -208,11 +208,11 @@ impl<P> Board<P> {
         }) + (cell.rank - self.depth.first_rank())) as usize
     }
 
-    pub(crate) fn get(&self, cell: Cell) -> Option<&Entry<P>> {
+    pub(crate) fn get(&self, cell: Cell) -> Option<&Entry> {
         self.inner.get(self.board_index(cell))
     }
 
-    pub(crate) fn get_mut(&mut self, cell: Cell) -> Option<&mut Entry<P>> {
+    pub(crate) fn get_mut(&mut self, cell: Cell) -> Option<&mut Entry> {
         let idx = self.board_index(cell);
         self.inner.get_mut(idx)
     }
@@ -261,7 +261,7 @@ impl<P> Board<P> {
     // }
 }
 
-impl Widget for &Board<Box<dyn Piece>> {
+impl Widget for &Board {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
     where
         Self: Sized,
@@ -279,27 +279,30 @@ impl Widget for &Board<Box<dyn Piece>> {
             .background_color(TONE_CANVAS_BG)
             .paint(|ctx| {
                 self.inner.iter().for_each(|entry| {
-                    let hex = entry.hex();
+                    ctx.draw(entry);
 
-                    let base = HexagonBase::from(*hex);
-                    ctx.draw(&base);
+                    // let hex = entry.hex();
+                    //
+                    // let base = HexagonBase::from(*hex);
+                    // ctx.draw(&base);
+                    //
+                    // if !self.hide_highlights {
+                    //     let base = HexagonHighlights::from(*hex);
+                    //     ctx.draw(&base);
+                    // }
+                    //
+                    // let Delta { x, y } = hex.center();
 
-                    if !self.hide_highlights {
-                        let base = HexagonHighlights::from(*hex);
-                        ctx.draw(&base);
-                    }
+                    // if let Some(piece) = entry.occupant() {
+                    // let style = match piece.color() {
+                    //     Color::Black => Style::new().white().on_black().bold(),
+                    //     Color::White => Style::new().black().on_white().bold(),
+                    //     _ => unreachable!(),
+                    // };
+                    // ctx.print(x, y, Line::styled(piece.mark(), style));
 
-                    let Delta { x, y } = hex.center();
-
-                    if let Some(piece) = entry.occupant() {
-                        let style = match piece.color() {
-                            Color::Black => Style::new().white().on_black().bold(),
-                            Color::White => Style::new().black().on_white().bold(),
-                            _ => unreachable!(),
-                        };
-
-                        ctx.print(x, y, Line::styled(piece.mark(), style));
-                    };
+                    // ctx.draw(piece.mark());
+                    // };
                 });
             })
             .render(area, buf)

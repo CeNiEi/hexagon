@@ -2,7 +2,9 @@ use ratatui::style::Color;
 
 use crate::{
     unit::cell::Cell,
-    utils::{direction::Direction, file::File, moves::single_direction_moves, rank::Rank},
+    utils::{
+        direction::Direction, file::File, mark::Mark, moves::single_direction_moves, rank::Rank,
+    },
 };
 
 use super::{Board, Move, Piece};
@@ -24,15 +26,15 @@ pub(crate) const BLACK_QUEEN_STARTING_LOCATION: Cell =
     unsafe { Cell::from_raw_parts(Rank::Rank10, File::FileE) };
 
 impl Piece for Queen {
-    fn mark(&self) -> &'static str {
-        "Q"
+    fn ty(&self) -> super::PieceType {
+        super::PieceType::Queen
     }
 
     fn color(&self) -> Color {
         self.color
     }
 
-    fn valid_moves(&self, board: &Board<Box<dyn Piece>>, current: Cell) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board , current: Cell) -> Vec<Move> {
         const ALLOWED_DIRECTIONS: [Direction; 12] = [
             Direction::Clock1,
             Direction::Clock2,

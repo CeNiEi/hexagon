@@ -8,7 +8,7 @@ pub(crate) mod direction;
 pub(crate) mod entry;
 pub(crate) mod file;
 pub(crate) mod fill_mode;
-mod mark;
+pub(crate) mod mark;
 pub(crate) mod mode;
 mod move_state;
 pub(crate) mod moves;

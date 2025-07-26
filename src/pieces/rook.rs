@@ -6,6 +6,7 @@ use crate::{
     utils::{
         direction::Direction,
         file::File,
+        mark::Mark,
         moves::{Move, single_direction_moves},
         rank::Rank,
     },
@@ -34,15 +35,15 @@ impl Rook {
 }
 
 impl Piece for Rook {
-    fn mark(&self) -> &'static str {
-        "R"
+    fn ty(&self) -> super::PieceType {
+        super::PieceType::Rook
     }
 
     fn color(&self) -> Color {
         self.color
     }
 
-    fn valid_moves(&self, board: &Board<Box<dyn Piece>>, current: Cell) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board , current: Cell) -> Vec<Move> {
         const ALLOWED_DIRECTIONS: [Direction; 6] = [
             Direction::Clock2,
             Direction::Clock4,

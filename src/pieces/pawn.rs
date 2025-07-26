@@ -7,6 +7,7 @@ use crate::{
     utils::{
         direction::Direction,
         file::File,
+        mark::Mark,
         moves::{MoveType, PawnFirstMoveState, PawnMoveState, PawnMoveType},
         rank::Rank,
     },
@@ -85,14 +86,14 @@ impl Pawn {
 }
 
 impl Piece for Pawn {
-    fn mark(&self) -> &'static str {
-        "P"
+    fn ty(&self) -> super::PieceType {
+        super::PieceType::Pawn
     }
     fn color(&self) -> Color {
         self.color
     }
 
-    fn valid_moves(&self, board: &Board<Box<dyn Piece>>, current: Cell) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board , current: Cell) -> Vec<Move> {
         let forward_direction = match self.color {
             Color::White => Direction::Clock12,
             Color::Black => Direction::Clock6,

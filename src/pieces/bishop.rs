@@ -1,8 +1,10 @@
-use ratatui::style::Color;
+use ratatui::{style::Color, widgets::canvas::Shape};
 
 use crate::{
     unit::cell::Cell,
-    utils::{direction::Direction, file::File, moves::single_direction_moves, rank::Rank},
+    utils::{
+        direction::Direction, file::File, mark::Mark, moves::single_direction_moves, rank::Rank,
+    },
 };
 
 use super::{Board, Move, Piece};
@@ -30,15 +32,15 @@ pub(crate) const BLACK_BISHOP_STARTING_CELLS: [Cell; 3] = [
 ];
 
 impl Piece for Bishop {
-    fn mark(&self) -> &'static str {
-        "B"
+    fn ty(&self) -> super::PieceType {
+        super::PieceType::Bishop
     }
 
     fn color(&self) -> Color {
         self.color
     }
 
-    fn valid_moves(&self, board: &Board<Box<dyn Piece>>, current: Cell) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board , current: Cell) -> Vec<Move> {
         const ALLOWED_DIRECTIONS: [Direction; 6] = [
             Direction::Clock1,
             Direction::Clock3,
