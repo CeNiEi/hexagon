@@ -18,7 +18,7 @@ use crate::{
 
 pub struct App {
     terminate: bool,
-    board: Board ,
+    board: Board,
     state: State,
 }
 
@@ -68,7 +68,7 @@ impl App {
             KeyCode::Right => self.state.move_current(&mut self.board, Direction::Clock2),
             KeyCode::Up => self.state.move_current(&mut self.board, Direction::Clock12),
             KeyCode::Down => self.state.move_current(&mut self.board, Direction::Clock6),
-            KeyCode::Enter => self.state.toggle_valid_moves(&mut self.board),
+            KeyCode::Enter => self.state.toggle_help_or_move(&mut self.board),
             _ => {}
         }
     }

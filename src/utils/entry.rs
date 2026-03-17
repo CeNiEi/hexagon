@@ -35,12 +35,20 @@ impl Entry {
         &mut self.hex
     }
 
+    pub(crate) fn remove_occupant(&mut self) -> Option<Box<dyn Piece>> {
+        self.occupant.take()
+    }
+
     pub(crate) fn occupant(&self) -> Option<&Box<dyn Piece>> {
         self.occupant.as_ref()
     }
 
     pub(crate) fn set_occupant(&mut self, occupant: impl Piece + 'static) {
         self.occupant = Some(Box::new(occupant) as Box<dyn Piece>);
+    }
+
+    pub(crate) fn replace_occupant(&mut self, occupant: Box<dyn Piece>) -> Option<Box<dyn Piece>> {
+        self.occupant.replace(occupant)
     }
 
     pub(crate) fn occupant_mut(&mut self) -> Option<&mut Box<dyn Piece>> {
@@ -63,8 +71,8 @@ impl Shape for Entry {
 
         if let Some(piece) = self.occupant() {
             let mark_color = match piece.color() {
-                Color::Black => Color::Yellow,
-                Color::White => Color::Green,
+                Color::Black => Color::Red,
+                Color::White => Color::White,
                 _ => unreachable!(),
             };
 

@@ -24,6 +24,6 @@ pub(crate) enum PieceType {
 
 pub trait Piece {
     fn color(&self) -> Color;
-    fn valid_moves(&self, board: &Board , current: Cell) -> Vec<Move>;
+    fn valid_moves(&self, board: &Board, current: Cell) -> Vec<Move>;
     fn ty(&self) -> PieceType;
 }

@@ -42,7 +42,7 @@ impl<T> RangeInc<T> {
         }
     }
 
-    pub(crate) fn remaning(&self) -> isize
+    pub(crate) fn remaining(&self) -> isize
     where
         T: Copy + Sub<Output = isize>,
     {

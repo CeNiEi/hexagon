@@ -15,14 +15,13 @@ use utils::{fill_mode::FillMode, depth::Depth};
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Cli {
-    #[arg(short, long, value_name = "LEN", default_value_t = 6.)]
+    #[arg(long, value_name = "LEN", default_value_t = 6.)]
     len: f64,
 
-    #[arg(short, long, value_name = "PADDING", default_value_t = 0.8)]
+    #[arg(long, value_name = "PADDING", default_value_t = 0.8)]
     padding: f64,
 
     #[arg(
-        short, 
         long, 
         value_name = "DEPTH", 
         value_parser = value_parser!(u8).range(1..=6), 
@@ -31,7 +30,6 @@ struct Cli {
     depth: u8,
 
     #[arg(
-        short, 
         long, 
         value_name = "COLOR_MODE", 
         value_enum,
@@ -39,16 +37,14 @@ struct Cli {
     )]
     color_mode: FillMode,
 
-    #[arg(short, long, value_name = "HIDE_PIECES")]
+    #[arg(long, value_name = "HIDE_PIECES")]
     hide_pieces: bool,
 
-    #[arg(short, long, value_name = "HIDE_HIGHLIGHTS")]
+    #[arg(long, value_name = "HIDE_HIGHLIGHTS")]
     hide_highlights: bool,
 
-    #[arg(short, long, value_name = "LOGGING")]
+    #[arg(long, value_name = "LOGGING")]
     logging: bool
-
-
 }
 
 fn setup_logger() -> Result<()> {

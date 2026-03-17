@@ -26,7 +26,7 @@ use crate::{
         fill_mode::FillMode,
         mark::Mark,
         mode::{HighlightMode, Status},
-        moves::{Move, MoveType, PawnMoveType, RestMoveType},
+        moves::{GeneralMoveType, Move, MoveType, PawnMoveType},
         range::Range,
         rank::Rank,
     },
@@ -55,6 +55,34 @@ pub(crate) struct Board {
     hide_highlights: bool,
 }
 
+#[macro_export]
+macro_rules! board_set {
+    ($(
+        ($color: expr, $path: ident, $piece: ident $(,)?)
+            on
+        [$rank: expr, $file: expr $(,)?]),* $(,)?
+    ) => {{
+        let mut board = $crate::board::Board::empty(
+            0.,
+            0.,
+            $crate::utils::depth::Depth::new(6).unwrap(),
+            $crate::utils::fill_mode::FillMode::Wireframe,
+            false,
+        );
+
+        $(
+            let cell = $crate::unit::cell::Cell::try_new($rank, $file).unwrap();
+
+            let piece = $crate::pieces::$path::$piece::new($color);
+
+            board[cell].set_occupant(piece);
+
+        )*
+
+        board
+    }};
+}
+
 impl Index<Cell> for Board {
     type Output = Entry;
     fn index(&self, index: Cell) -> &Self::Output {
@@ -69,7 +97,7 @@ impl IndexMut<Cell> for Board {
 }
 
 impl Board {
-    fn empty(
+    pub(crate) fn empty(
         len: f64,
         padding: f64,
         depth: Depth,
@@ -77,7 +105,7 @@ impl Board {
         hide_highlights: bool,
     ) -> Self {
         let colors = [TONE_HEX_BG1, TONE_HEX_BG2, TONE_HEX_BG3];
-        let num_files = depth.file_range().remaning() as usize;
+        let num_files = depth.file_range().remaining() as usize;
 
         let inner = depth
             .file_range()
@@ -150,7 +178,7 @@ impl Board {
 
             BLACK_ROOK_STARTING_CELLS
                 .into_iter()
-                .for_each(|cell| board[cell].set_occupant(Rook::new(Color::Black)));
+                .for_each(|cell| board[cell].set_occupant((Rook::new(Color::Black))));
 
             WHITE_KNIGHT_STARTING_CELLS
                 .into_iter()
@@ -172,39 +200,78 @@ impl Board {
         board
     }
 
-    // pub(crate) fn show_valid_moves(&mut self) {
-    //     let Some(occupant) = self[self.current].occupant() else {
-    //         return;
-    //     };
-    //
-    //     occupant.valid_moves(&self).into_iter().for_each(|mov| {
-    //         match mov.move_type {
-    //             MoveType::Rest(RestMoveType::Capture)
-    //             | MoveType::Pawn(PawnMoveType::CapturePromotion)
-    //             | MoveType::Pawn(PawnMoveType::NormalCapture) => {
-    //                 self[mov.move_to].hex_mut().set_status(Status::Capturable);
-    //             }
-    //             MoveType::Rest(RestMoveType::NonCapture)
-    //             | MoveType::Pawn(PawnMoveType::NonCapturePromotion)
-    //             | MoveType::Pawn(PawnMoveType::NonCapture) => {
-    //                 self[mov.move_to].hex_mut().set_status(Status::Movable);
-    //             }
-    //             MoveType::Pawn(PawnMoveType::EnPassant { remove_piece_on }) => {
-    //                 self[mov.move_to].hex_mut().set_status(Status::Movable);
-    //                 self[remove_piece_on]
-    //                     .hex_mut()
-    //                     .set_status(Status::Capturable);
-    //             }
-    //         };
-    //     });
-    // }
+    pub(crate) fn show_valid_moves(&mut self, cell: Cell) {
+        let Some(occupant) = self[cell].occupant() else {
+            return;
+        };
+
+        occupant
+            .valid_moves(&self, cell)
+            .into_iter()
+            .for_each(|mov| {
+                match mov.move_type {
+                    MoveType::Rest(GeneralMoveType::Capture)
+                    | MoveType::Pawn(PawnMoveType::CapturePromotion)
+                    | MoveType::Pawn(PawnMoveType::NormalCapture) => {
+                        self[mov.move_to].hex_mut().set_status(Status::Capturable);
+                    }
+                    MoveType::Rest(GeneralMoveType::NonCapture)
+                    | MoveType::Pawn(PawnMoveType::NonCapturePromotion)
+                    | MoveType::Pawn(PawnMoveType::NonCapture) => {
+                        self[mov.move_to].hex_mut().set_status(Status::Movable);
+                    }
+                    MoveType::Pawn(PawnMoveType::EnPassant { remove_piece_on }) => {
+                        self[mov.move_to].hex_mut().set_status(Status::Movable);
+                        self[remove_piece_on]
+                            .hex_mut()
+                            .set_status(Status::Capturable);
+                    }
+                };
+            });
+    }
+
+    pub(crate) fn hide_valid_moves(&mut self, cell: Cell) {
+        let Some(occupant) = self[cell].occupant() else {
+            return;
+        };
+
+        occupant
+            .valid_moves(&self, cell)
+            .into_iter()
+            .for_each(|mov| {
+                match mov.move_type {
+                    MoveType::Rest(GeneralMoveType::Capture)
+                    | MoveType::Pawn(PawnMoveType::CapturePromotion)
+                    | MoveType::Pawn(PawnMoveType::NormalCapture) => {
+                        self[mov.move_to].hex_mut().set_status(Status::None);
+                    }
+                    MoveType::Rest(GeneralMoveType::NonCapture)
+                    | MoveType::Pawn(PawnMoveType::NonCapturePromotion)
+                    | MoveType::Pawn(PawnMoveType::NonCapture) => {
+                        self[mov.move_to].hex_mut().set_status(Status::None);
+                    }
+                    MoveType::Pawn(PawnMoveType::EnPassant { remove_piece_on }) => {
+                        self[mov.move_to].hex_mut().set_status(Status::None);
+                        self[remove_piece_on].hex_mut().set_status(Status::None);
+                    }
+                };
+            });
+    }
+
+    pub(crate) fn move_occupant(&mut self, src: Cell, dest: Cell) -> Option<Box<dyn Piece>> {
+        let Some(src_occupant) = self[src].remove_occupant() else {
+            return None;
+        };
+
+        self[dest].replace_occupant(src_occupant)
+    }
 }
 
 impl Board {
     //TODO: OPTIMISE
     fn board_index(&self, cell: Cell) -> usize {
         (Range::new(self.depth.first_file(), cell.file).fold(0, |accum, file| {
-            accum + self.depth.rank_range(file).remaning()
+            accum + self.depth.rank_range(file).remaining()
         }) + (cell.rank - self.depth.first_rank())) as usize
     }
 

@@ -6,7 +6,7 @@ use crate::{
         direction::Direction,
         file::File,
         mark::Mark,
-        moves::{MoveType, RestMoveType},
+        moves::{GeneralMoveType, MoveType},
         rank::Rank,
     },
 };
@@ -42,7 +42,7 @@ impl Piece for Knight {
         self.color
     }
 
-    fn valid_moves(&self, board: &Board , current: Cell) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board, current: Cell) -> Vec<Move> {
         const DIRECTIONS: [Direction; 6] = [
             Direction::Clock2,
             Direction::Clock4,
@@ -76,15 +76,19 @@ impl Piece for Knight {
                             .map(|cell| match board[cell].occupant() {
                                 Some(piece) => {
                                     if piece.color() != self.color {
-                                        Some(Move::new(cell, MoveType::Rest(RestMoveType::Capture)))
+                                        Some(Move::new(
+                                            cell,
+                                            MoveType::Rest(GeneralMoveType::Capture),
+                                        ))
                                     } else {
                                         None
                                     }
                                 }
 
-                                None => {
-                                    Some(Move::new(cell, MoveType::Rest(RestMoveType::NonCapture)))
-                                }
+                                None => Some(Move::new(
+                                    cell,
+                                    MoveType::Rest(GeneralMoveType::NonCapture),
+                                )),
                             })
                             .flatten()
                     })

@@ -18,7 +18,7 @@ impl Move {
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum MoveType {
-    Rest(RestMoveType),
+    Rest(GeneralMoveType),
     Pawn(PawnMoveType),
 }
 
@@ -32,7 +32,7 @@ pub(crate) enum PawnMoveType {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(crate) enum RestMoveType {
+pub(crate) enum GeneralMoveType {
     NonCapture,
     Capture,
 }
@@ -54,7 +54,7 @@ pub(crate) fn single_direction_moves(
     cell: Cell,
     color: Color,
     direction: Direction,
-    board: &Board ,
+    board: &Board,
 ) -> Vec<Move> {
     std::iter::successors(cell.next(direction), |current_cell: &Cell| {
         current_cell.next(direction)
@@ -69,14 +69,14 @@ pub(crate) fn single_direction_moves(
                     Some(piece) => {
                         if piece.color() != color {
                             moves_in_curr_direction
-                                .push(Move::new(cell, MoveType::Rest(RestMoveType::Capture)));
+                                .push(Move::new(cell, MoveType::Rest(GeneralMoveType::Capture)));
                         }
 
                         true
                     }
                     None => {
                         moves_in_curr_direction
-                            .push(Move::new(cell, MoveType::Rest(RestMoveType::NonCapture)));
+                            .push(Move::new(cell, MoveType::Rest(GeneralMoveType::NonCapture)));
 
                         false
                     }
