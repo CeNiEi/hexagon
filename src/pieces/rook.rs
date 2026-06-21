@@ -61,3 +61,4 @@ impl Piece for Rook {
         valid_moves
     }
 }
+

@@ -37,19 +37,6 @@ pub(crate) enum GeneralMoveType {
     Capture,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) enum PawnMoveState {
-    Before,
-    First(PawnFirstMoveState),
-    After,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) enum PawnFirstMoveState {
-    Single,
-    Double,
-}
-
 pub(crate) fn single_direction_moves(
     cell: Cell,
     color: Color,

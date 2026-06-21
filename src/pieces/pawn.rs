@@ -1,5 +1,3 @@
-use std::any::Any;
-
 use ratatui::style::Color;
 
 use crate::{
@@ -8,7 +6,7 @@ use crate::{
         direction::Direction,
         file::File,
         mark::Mark,
-        moves::{MoveType, PawnFirstMoveState, PawnMoveState, PawnMoveType},
+        moves::{MoveType, PawnMoveType},
         rank::Rank,
     },
 };
@@ -69,19 +67,11 @@ pub(crate) const BLACK_PAWN_PROMOTION_CELLS: [Cell; 11] = [
 
 pub(crate) struct Pawn {
     color: Color,
-    en_passant_state: PawnMoveState,
 }
 
 impl Pawn {
-    pub(crate) fn en_passant_able(&self) -> bool {
-        self.en_passant_state == PawnMoveState::First(PawnFirstMoveState::Double)
-    }
-
     pub(crate) fn new(color: Color) -> Self {
-        Self {
-            color,
-            en_passant_state: PawnMoveState::Before,
-        }
+        Self { color }
     }
 }
 
@@ -149,34 +139,12 @@ impl Piece for Pawn {
                             None
                         }
                     }
-                    None => {
-                        let Some(en_passant_cell) = cell.next(forward_direction.reverse()) else {
-                            return None;
-                        };
-
-                        board[en_passant_cell]
-                            .occupant()
-                            .map(|piece| {
-                                if piece.color() != self.color {
-                                    (piece as &dyn Any)
-                                        .downcast_ref::<Self>()
-                                        .map(|pawn_piece| {
-                                            if pawn_piece.en_passant_able() {
-                                                Some(PawnMove::EnPassant {
-                                                    move_to: cell,
-                                                    captures: en_passant_cell,
-                                                })
-                                            } else {
-                                                None
-                                            }
-                                        })
-                                        .flatten()
-                                } else {
-                                    None
-                                }
-                            })
-                            .flatten()
-                    }
+                    None => board.en_passant_capture(self.color, cell).map(|captures| {
+                        PawnMove::EnPassant {
+                            move_to: cell,
+                            captures,
+                        }
+                    }),
                 })
                 .flatten()
         });
@@ -220,3 +188,4 @@ impl Piece for Pawn {
             .collect()
     }
 }
+

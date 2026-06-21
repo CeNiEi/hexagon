@@ -58,3 +58,4 @@ impl Piece for Queen {
         valid_moves
     }
 }
+

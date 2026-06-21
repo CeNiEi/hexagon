@@ -1,3 +1,5 @@
+use ratatui::style::Color;
+
 #[derive(Clone, Copy, Debug, Default)]
 pub(crate) enum Player {
     #[default]
@@ -6,7 +8,14 @@ pub(crate) enum Player {
 }
 
 impl Player {
-    fn toggle(&self) -> Player {
+    pub(crate) fn color(&self) -> Color {
+        match self {
+            Self::White => Color::White,
+            Self::Black => Color::Black,
+        }
+    }
+
+    pub(crate) fn toggle(&self) -> Player {
         match self {
             Self::White => Self::Black,
             Self::Black => Self::White,

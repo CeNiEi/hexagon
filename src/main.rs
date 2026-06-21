@@ -67,6 +67,10 @@ fn setup_logger() -> Result<()> {
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
+    if cli.depth != 6 && !cli.hide_pieces {
+        anyhow::bail!("--depth is only for visual board/hexagon checks; use --hide-pieces with --depth < 6");
+    }
+
     if cli.logging {
         setup_logger()?;
     }

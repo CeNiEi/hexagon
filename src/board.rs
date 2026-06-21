@@ -48,9 +48,17 @@ pub(crate) const TONE_HEX_BG3: Color = Color::LightGreen;
 
 pub(crate) const TONE_CANVAS_BG: Color = Color::Black;
 
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct EnPassant {
+    pub(crate) captured_pawn: Cell,
+    pub(crate) capture_move_to: Cell,
+    pub(crate) pawn_color: Color,
+}
+
 pub(crate) struct Board {
     inner: Vec<Entry>,
     depth: Depth,
+    en_passant: Option<EnPassant>,
 
     hide_highlights: bool,
 }
@@ -141,6 +149,7 @@ impl Board {
         Self {
             inner,
             depth,
+            en_passant: None,
             hide_highlights,
         }
     }
@@ -264,6 +273,24 @@ impl Board {
         };
 
         self[dest].replace_occupant(src_occupant)
+    }
+
+    pub(crate) fn clear_en_passant(&mut self) {
+        self.en_passant = None;
+    }
+
+    pub(crate) fn set_en_passant(&mut self, en_passant: EnPassant) {
+        self.en_passant = Some(en_passant);
+    }
+
+    pub(crate) fn en_passant_capture(&self, attacker_color: Color, move_to: Cell) -> Option<Cell> {
+        self.en_passant.and_then(|en_passant| {
+            if en_passant.pawn_color != attacker_color && en_passant.capture_move_to == move_to {
+                Some(en_passant.captured_pawn)
+            } else {
+                None
+            }
+        })
     }
 }
 
