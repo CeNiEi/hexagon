@@ -18,6 +18,7 @@ use crate::{
     state::State,
     unit::cell::Cell,
     utils::{
+        consts::{TERM_SCALE_FACTOR, TONE_CANVAS_BG, TONE_HEX_BG1, TONE_HEX_BG2, TONE_HEX_BG3},
         delta::Delta,
         depth::Depth,
         direction::Direction,
@@ -41,12 +42,6 @@ use ratatui::{
     },
 };
 use strum::IntoEnumIterator;
-
-pub(crate) const TONE_HEX_BG1: Color = Color::Yellow;
-pub(crate) const TONE_HEX_BG2: Color = Color::LightYellow;
-pub(crate) const TONE_HEX_BG3: Color = Color::LightGreen;
-
-pub(crate) const TONE_CANVAS_BG: Color = Color::Black;
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct EnPassant {
@@ -360,10 +355,8 @@ impl Widget for &Board {
     where
         Self: Sized,
     {
-        const SCALE_FACTOR: f64 = 2.;
-
         let y_dim = area.height as f64;
-        let x_dim = y_dim * SCALE_FACTOR;
+        let x_dim = y_dim * TERM_SCALE_FACTOR;
 
         Canvas::default()
             .x_bounds([-x_dim / 2., x_dim / 2.])

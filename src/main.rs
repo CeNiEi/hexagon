@@ -12,6 +12,7 @@ use anyhow::Result;
 use clap::{value_parser, Parser, ValueEnum};
 use utils::{fill_mode::FillMode, depth::Depth};
 
+
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Cli {
@@ -44,7 +45,11 @@ struct Cli {
     hide_highlights: bool,
 
     #[arg(long, value_name = "LOGGING")]
-    logging: bool
+    logging: bool,
+
+    #[arg(long, value_name = "PANEL", default_value_t = 32)]
+    panel: u16 
+    
 }
 
 fn setup_logger() -> Result<()> {

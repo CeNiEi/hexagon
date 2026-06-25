@@ -1,6 +1,6 @@
 use ratatui::{style::Color, widgets::canvas::Shape};
 
-use crate::{board::TONE_CANVAS_BG, hexagon::Hexagon, pieces::Piece};
+use crate::{hexagon::Hexagon, pieces::Piece};
 
 use super::{delta::Delta, mark::Mark};
 

@@ -11,6 +11,7 @@ use anyhow::Result;
 
 use crate::{
     board::Board,
+    panel::Panel,
     pieces::Piece,
     state::State,
     utils::{depth::Depth, direction::Direction, fill_mode::FillMode},
@@ -20,6 +21,7 @@ pub struct App {
     terminate: bool,
     board: Board,
     state: State,
+    panel: Panel,
 }
 
 impl App {
@@ -42,6 +44,7 @@ impl App {
                 hide_highlights,
             ),
             state: State::default(),
+            panel: Panel::new(),
         }
     }
 

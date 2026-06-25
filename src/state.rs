@@ -5,6 +5,7 @@ use crate::{
     pieces::{PieceType, queen::Queen},
     unit::cell::Cell,
     utils::{
+        consts::{TERM_SCALE_FACTOR, TONE_CANVAS_BG},
         direction::Direction,
         mode::Status,
         moves::{GeneralMoveType, MoveType, PawnMoveType},
@@ -18,6 +19,7 @@ pub(crate) struct State {
     player: Player,
     current: Cell,
     move_progression: MoveProgression,
+    history: History,
 }
 
 impl State {
@@ -158,6 +160,25 @@ impl State {
     //         }
     //     }
     // }
+}
+
+impl Widget for &State {
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
+    where
+        Self: Sized,
+    {
+        let y_dim = area.height as f64;
+        let x_dim = y_dim * TERM_SCALE_FACTOR;
+
+        Canvas::default()
+            .x_bounds([-x_dim / 2., x_dim / 2.])
+            .y_bounds([-y_dim / 2., y_dim / 2.])
+            .block(Block::default().borders(Borders::ALL))
+            .background_color(TONE_CANVAS_BG)
+            .paint(|ctx| {
+                todo!();
+            });
+    }
 }
 
 #[cfg(test)]
