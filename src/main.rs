@@ -4,14 +4,13 @@ mod app;
 mod board;
 mod hexagon;
 mod pieces;
+mod state;
 mod unit;
 mod utils;
-mod state;
 
 use anyhow::Result;
-use clap::{value_parser, Parser, ValueEnum};
-use utils::{fill_mode::FillMode, depth::Depth};
-
+use clap::{Parser, value_parser};
+use utils::{depth::Depth, fill_mode::FillMode};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -23,16 +22,16 @@ struct Cli {
     padding: f64,
 
     #[arg(
-        long, 
-        value_name = "DEPTH", 
-        value_parser = value_parser!(u8).range(1..=6), 
+        long,
+        value_name = "DEPTH",
+        value_parser = value_parser!(u8).range(1..=6),
         default_value_t = 6
     )]
     depth: u8,
 
     #[arg(
-        long, 
-        value_name = "COLOR_MODE", 
+        long,
+        value_name = "COLOR_MODE",
         value_enum,
         default_value_t = FillMode::Wireframe
     )]
@@ -47,9 +46,6 @@ struct Cli {
     #[arg(long, value_name = "LOGGING")]
     logging: bool,
 
-    #[arg(long, value_name = "PANEL", default_value_t = 32)]
-    panel: u16 
-    
 }
 
 fn setup_logger() -> Result<()> {
@@ -73,7 +69,9 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     if cli.depth != 6 && !cli.hide_pieces {
-        anyhow::bail!("--depth is only for visual board/hexagon checks; use --hide-pieces with --depth < 6");
+        anyhow::bail!(
+            "--depth is only for visual board/hexagon checks; use --hide-pieces with --depth < 6"
+        );
     }
 
     if cli.logging {
@@ -81,7 +79,15 @@ fn main() -> Result<()> {
     }
 
     let mut terminal = ratatui::init();
-    let res = App::new(cli.len, cli.padding, Depth::new(cli.depth)?, cli.color_mode, cli.hide_pieces, cli.hide_highlights).run(&mut terminal);
+    let res = App::new(
+        cli.len,
+        cli.padding,
+        Depth::new(cli.depth)?,
+        cli.color_mode,
+        cli.hide_pieces,
+        cli.hide_highlights,
+    )
+    .run(&mut terminal);
     ratatui::restore();
     res
 }

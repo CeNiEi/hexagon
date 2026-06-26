@@ -62,6 +62,22 @@ impl Step for File {
 }
 
 impl File {
+    pub(crate) fn label(&self) -> &'static str {
+        match self {
+            File::FileA => "A",
+            File::FileB => "B",
+            File::FileC => "C",
+            File::FileD => "D",
+            File::FileE => "E",
+            File::FileF => "F",
+            File::FileG => "G",
+            File::FileH => "H",
+            File::FileI => "I",
+            File::FileK => "K",
+            File::FileL => "L",
+        }
+    }
+
     pub(crate) fn rank_range(&self) -> RangeInc<Rank> {
         match self {
             File::FileA => RangeInc::new(Rank::Rank1, Rank::Rank6),

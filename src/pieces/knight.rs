@@ -99,4 +99,3 @@ impl Piece for Knight {
         valid_moves
     }
 }
-

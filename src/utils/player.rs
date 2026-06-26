@@ -21,4 +21,11 @@ impl Player {
             Self::Black => Self::White,
         }
     }
+
+    pub(crate) fn label(&self) -> &'static str {
+        match self {
+            Self::White => "W",
+            Self::Black => "B",
+        }
+    }
 }

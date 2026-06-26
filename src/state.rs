@@ -1,28 +1,138 @@
-use ratatui::widgets::ScrollbarOrientation;
+use ratatui::{
+    layout::{Constraint, Layout},
+    style::Color,
+    widgets::{
+        Block, Borders, Widget,
+        canvas::{Canvas, Context},
+    },
+};
 
 use crate::{
     board::{Board, EnPassant},
     pieces::{PieceType, queen::Queen},
     unit::cell::Cell,
     utils::{
-        consts::{TERM_SCALE_FACTOR, TONE_CANVAS_BG},
+        consts::TONE_CANVAS_BG,
         direction::Direction,
-        mode::Status,
+        history::History,
+        mark::Mark,
         moves::{GeneralMoveType, MoveType, PawnMoveType},
         player::Player,
         progression::MoveProgression,
     },
 };
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
+pub(crate) enum Panel {
+    Hidden,
+    Visible { width_percentage: u16 },
+}
+
+#[derive(Debug)]
 pub(crate) struct State {
     player: Player,
     current: Cell,
     move_progression: MoveProgression,
     history: History,
+    panel: Panel,
+}
+
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            player: Player::default(),
+            current: Cell::default(),
+            move_progression: MoveProgression::default(),
+            history: History::default(),
+            panel: Panel::Visible {
+                width_percentage: 25,
+            },
+        }
+    }
+}
+
+fn draw_mark(
+    ctx: &mut Context<'_>,
+    mark: char,
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+    color: Color,
+) {
+    match mark {
+        'B' => ctx.draw(&Mark::<'B'>::new(x, y, width, height, color)),
+        'H' => ctx.draw(&Mark::<'H'>::new(x, y, width, height, color)),
+        'I' => ctx.draw(&Mark::<'I'>::new(x, y, width, height, color)),
+        'N' => ctx.draw(&Mark::<'N'>::new(x, y, width, height, color)),
+        'O' => ctx.draw(&Mark::<'O'>::new(x, y, width, height, color)),
+        'R' => ctx.draw(&Mark::<'R'>::new(x, y, width, height, color)),
+        'S' => ctx.draw(&Mark::<'S'>::new(x, y, width, height, color)),
+        'T' => ctx.draw(&Mark::<'T'>::new(x, y, width, height, color)),
+        'U' => ctx.draw(&Mark::<'U'>::new(x, y, width, height, color)),
+        'W' => ctx.draw(&Mark::<'W'>::new(x, y, width, height, color)),
+        'Y' => ctx.draw(&Mark::<'Y'>::new(x, y, width, height, color)),
+        _ => {}
+    }
+}
+
+fn draw_word(
+    ctx: &mut Context<'_>,
+    word: &str,
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+    color: Color,
+) {
+    let gap = width * 0.35;
+    let count = word.chars().count() as f64;
+    let total_width = count * width + (count - 1.).max(0.) * gap;
+    let start = x - total_width / 2. + width / 2.;
+
+    word.chars().enumerate().for_each(|(idx, mark)| {
+        draw_mark(
+            ctx,
+            mark,
+            start + idx as f64 * (width + gap),
+            y,
+            width,
+            height,
+            color,
+        );
+    });
+}
+
+fn mark_width_for(word: &str, max_width: f64, height: f64) -> f64 {
+    const GAP_FACTOR: f64 = 0.35;
+
+    let count = word.chars().count() as f64;
+    let fit_width = max_width / (count + (count - 1.).max(0.) * GAP_FACTOR);
+
+    (height * 0.75).min(fit_width * 0.9)
 }
 
 impl State {
+    pub(crate) fn new() -> Self {
+        Self {
+            panel: Panel::Hidden,
+            ..Self::default()
+        }
+    }
+
+    pub(crate) fn panel(&self) -> &Panel {
+        &self.panel
+    }
+
+    pub(crate) fn toggle_panel(&mut self) {
+        self.panel = match self.panel {
+            Panel::Hidden => Panel::Visible {
+                width_percentage: 25,
+            },
+            Panel::Visible { .. } => Panel::Hidden,
+        };
+    }
+
     pub(crate) fn set_current(&mut self, board: &mut Board, cell: Cell) {
         let current_cell = self.current;
 
@@ -167,17 +277,78 @@ impl Widget for &State {
     where
         Self: Sized,
     {
-        let y_dim = area.height as f64;
-        let x_dim = y_dim * TERM_SCALE_FACTOR;
+        let block = Block::default().borders(Borders::ALL);
+        let inner = block.inner(area);
+        block.render(area, buf);
 
-        Canvas::default()
-            .x_bounds([-x_dim / 2., x_dim / 2.])
-            .y_bounds([-y_dim / 2., y_dim / 2.])
+        let [player_area, history_area] =
+            Layout::vertical([Constraint::Percentage(20), Constraint::Percentage(80)]).areas(inner);
+
+        let player_y_dim = player_area.height as f64;
+        let player_x_dim = player_area.width as f64;
+        let history_y_dim = history_area.height as f64;
+        let history_x_dim = history_area.width as f64;
+
+        let player = Canvas::default()
             .block(Block::default().borders(Borders::ALL))
             .background_color(TONE_CANVAS_BG)
+            .x_bounds([-player_x_dim / 2., player_x_dim / 2.])
+            .y_bounds([-player_y_dim / 2., player_y_dim / 2.])
             .paint(|ctx| {
-                todo!();
+                let heading_height = player_y_dim * 0.18;
+                let heading_width = mark_width_for("TURN", player_x_dim * 0.8, heading_height);
+                let player_mark_size = (player_y_dim * 0.38).min(player_x_dim * 0.45);
+
+                draw_word(
+                    ctx,
+                    "TURN",
+                    0.,
+                    player_y_dim * 0.24,
+                    heading_width,
+                    heading_height,
+                    Color::LightYellow,
+                );
+
+                match self.player {
+                    Player::White => ctx.draw(&Mark::<'W'>::new(
+                        0.,
+                        -player_y_dim * 0.16,
+                        player_mark_size,
+                        player_mark_size,
+                        Color::White,
+                    )),
+                    Player::Black => ctx.draw(&Mark::<'B'>::new(
+                        0.,
+                        -player_y_dim * 0.16,
+                        player_mark_size,
+                        player_mark_size,
+                        Color::Red,
+                    )),
+                }
             });
+
+        let history = Canvas::default()
+            .block(Block::default().borders(Borders::ALL))
+            .background_color(TONE_CANVAS_BG)
+            .x_bounds([-history_x_dim / 2., history_x_dim / 2.])
+            .y_bounds([-history_y_dim / 2., history_y_dim / 2.])
+            .paint(|ctx| {
+                let heading_height = history_y_dim * 0.08;
+                let heading_width = mark_width_for("HISTORY", history_x_dim * 0.85, heading_height);
+
+                draw_word(
+                    ctx,
+                    "HISTORY",
+                    0.,
+                    history_y_dim * 0.42,
+                    heading_width,
+                    heading_height,
+                    Color::LightYellow,
+                );
+            });
+
+        player.render(player_area, buf);
+        history.render(history_area, buf);
     }
 }
 
@@ -216,6 +387,7 @@ mod tests {
             player: Player::White,
             current: src,
             move_progression: MoveProgression::Navigation,
+            ..State::default()
         };
 
         assert!(state.possibly_move(src, dest, &mut board));
@@ -237,6 +409,7 @@ mod tests {
             player: Player::White,
             current: src,
             move_progression: MoveProgression::Navigation,
+            ..State::default()
         };
 
         assert!(state.possibly_move(src, dest, &mut board));
@@ -260,6 +433,7 @@ mod tests {
             player: Player::White,
             current: white_src,
             move_progression: MoveProgression::Navigation,
+            ..State::default()
         };
 
         assert!(state.possibly_move(white_src, white_dest, &mut board));
@@ -305,6 +479,7 @@ mod tests {
             player: Player::White,
             current: white_src,
             move_progression: MoveProgression::Navigation,
+            ..State::default()
         };
 
         assert!(state.possibly_move(white_src, white_dest, &mut board));

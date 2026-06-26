@@ -84,4 +84,3 @@ impl Piece for King {
         valid_moves
     }
 }
-

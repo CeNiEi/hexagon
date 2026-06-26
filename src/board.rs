@@ -350,22 +350,52 @@ impl Board {
     // }
 }
 
-impl Widget for &Board {
+pub(crate) struct BoardView<'a> {
+    pub(crate) board: &'a Board,
+    pub(crate) div: f64,
+}
+
+impl<'a> Widget for &'a BoardView<'a> {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
     where
         Self: Sized,
     {
+        // let mut width = area.width;
+        // let mut height = (width as f64 / TERM_SCALE_FACTOR).floor() as u16;
+        // log::info!("{width}, {height}");
+        log::info!("{}, {}", area.width, area.height);
+
+        // if height == 0 || height > area.height {
+        //     height = area.height;
+        //     width = (height as f64 * TERM_SCALE_FACTOR).floor() as u16;
+        // }
+
+        // let render_area = ratatui::prelude::Rect {
+        //     x: area.x + area.width.saturating_sub(width) / 2,
+        //     y: area.y + area.height.saturating_sub(height) / 2,
+        //     width,
+        //     height,
+        // };
+
+        // let y_dim = render_area.height as f64;
+        // let x_dim = y_dim * TERM_SCALE_FACTOR;
+
+        let scale_factor = area.width as f64 / area.height as f64;
+        log::info!("Scale Factor: {scale_factor}");
         let y_dim = area.height as f64;
-        let x_dim = y_dim * TERM_SCALE_FACTOR;
+        let x_dim = y_dim as f64 * TERM_SCALE_FACTOR;
+
+        // let x_dim = area.width as f64;
+        // let y_dim = x_dim as f64 / TERM_SCALE_FACTOR;
 
         Canvas::default()
-            .x_bounds([-x_dim / 2., x_dim / 2.])
+            .x_bounds([-x_dim / self.div, x_dim / self.div])
             .y_bounds([-y_dim / 2., y_dim / 2.])
             .block(Block::default().borders(Borders::ALL))
             .marker(ratatui::symbols::Marker::Braille)
             .background_color(TONE_CANVAS_BG)
             .paint(|ctx| {
-                self.inner.iter().for_each(|entry| {
+                self.board.inner.iter().for_each(|entry| {
                     ctx.draw(entry);
 
                     // let hex = entry.hex();

@@ -58,4 +58,3 @@ impl Piece for Bishop {
         valid_moves
     }
 }
-

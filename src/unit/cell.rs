@@ -1,5 +1,6 @@
 use crate::utils::{Step, direction::Direction, file::File, range::Range, rank::Rank};
 use anyhow::{Result, anyhow};
+use ratatui::text::Line;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub(crate) struct Cell {
@@ -33,6 +34,14 @@ impl Cell {
 
     pub(crate) fn new(rank: Rank, file: File) -> Self {
         Self::try_new(rank, file).unwrap()
+    }
+
+    pub(crate) fn label(&self) -> String {
+        format!("{}{}", self.file.label(), self.rank.label())
+    }
+
+    pub(crate) fn line(&self) -> Line<'static> {
+        Line::from(format!("C: {}", self.label()))
     }
 
     pub(crate) fn next(&self, direction: Direction) -> Option<Self> {

@@ -13,7 +13,6 @@ pub(crate) mod history;
 pub(crate) mod mark;
 pub(crate) mod mode;
 pub(crate) mod moves;
-pub(crate) mod panel;
 pub(crate) mod player;
 pub(crate) mod progression;
 pub(crate) mod range;

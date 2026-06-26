@@ -83,7 +83,7 @@ impl Piece for Pawn {
         self.color
     }
 
-    fn valid_moves(&self, board: &Board , current: Cell) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board, current: Cell) -> Vec<Move> {
         let forward_direction = match self.color {
             Color::White => Direction::Clock12,
             Color::Black => Direction::Clock6,
@@ -188,4 +188,3 @@ impl Piece for Pawn {
             .collect()
     }
 }
-

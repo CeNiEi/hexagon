@@ -43,7 +43,7 @@ impl Piece for Rook {
         self.color
     }
 
-    fn valid_moves(&self, board: &Board , current: Cell) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board, current: Cell) -> Vec<Move> {
         const ALLOWED_DIRECTIONS: [Direction; 6] = [
             Direction::Clock2,
             Direction::Clock4,
@@ -61,4 +61,3 @@ impl Piece for Rook {
         valid_moves
     }
 }
-

@@ -37,8 +37,7 @@ mod glinski_move_tests {
     use crate::{
         board::Board,
         pieces::{
-            bishop::Bishop, king::King, knight::Knight, pawn::Pawn, queen::Queen, rook::Rook,
-            Piece,
+            Piece, bishop::Bishop, king::King, knight::Knight, pawn::Pawn, queen::Queen, rook::Rook,
         },
         unit::cell::Cell,
         utils::{
@@ -51,14 +50,35 @@ mod glinski_move_tests {
     };
 
     const ROOK_DELTAS: [(isize, isize); 6] = [(1, 1), (1, -1), (0, -2), (-1, -1), (-1, 1), (0, 2)];
-    const BISHOP_DELTAS: [(isize, isize); 6] = [(1, 3), (2, 0), (1, -3), (-1, -3), (-2, 0), (-1, 3)];
+    const BISHOP_DELTAS: [(isize, isize); 6] =
+        [(1, 3), (2, 0), (1, -3), (-1, -3), (-2, 0), (-1, 3)];
     const KING_DELTAS: [(isize, isize); 12] = [
-        (1, 3), (1, 1), (2, 0), (1, -1), (1, -3), (0, -2),
-        (-1, -3), (-1, -1), (-2, 0), (-1, 1), (-1, 3), (0, 2),
+        (1, 3),
+        (1, 1),
+        (2, 0),
+        (1, -1),
+        (1, -3),
+        (0, -2),
+        (-1, -3),
+        (-1, -1),
+        (-2, 0),
+        (-1, 1),
+        (-1, 3),
+        (0, 2),
     ];
     const KNIGHT_DELTAS: [(isize, isize); 12] = [
-        (-3, -1), (-3, 1), (-2, -4), (-2, 4), (-1, -5), (-1, 5),
-        (1, -5), (1, 5), (2, -4), (2, 4), (3, -1), (3, 1),
+        (-3, -1),
+        (-3, 1),
+        (-2, -4),
+        (-2, 4),
+        (-1, -5),
+        (-1, 5),
+        (1, -5),
+        (1, 5),
+        (2, -4),
+        (2, 4),
+        (3, -1),
+        (3, 1),
     ];
 
     fn empty_board() -> Board {
@@ -81,9 +101,7 @@ mod glinski_move_tests {
 
     fn all_cells() -> Vec<Cell> {
         File::iter()
-            .flat_map(|file| {
-                Rank::iter().filter_map(move |rank| Cell::try_new(rank, file).ok())
-            })
+            .flat_map(|file| Rank::iter().filter_map(move |rank| Cell::try_new(rank, file).ok()))
             .collect()
     }
 
@@ -111,9 +129,7 @@ mod glinski_move_tests {
     }
 
     fn cell_at_xy(x: isize, y: isize) -> Option<Cell> {
-        all_cells()
-            .into_iter()
-            .find(|cell| to_xy(*cell) == (x, y))
+        all_cells().into_iter().find(|cell| to_xy(*cell) == (x, y))
     }
 
     fn expected_slider_moves(start: Cell, directions: &[(isize, isize)]) -> Vec<Cell> {
@@ -228,7 +244,8 @@ mod glinski_move_tests {
         assert!(!destinations(&moves).contains(&ally));
         assert!(!destinations(&moves).contains(&behind_ally));
         assert!(moves.iter().any(|mov| {
-            mov.move_to == enemy && matches!(mov.move_type, MoveType::Rest(GeneralMoveType::Capture))
+            mov.move_to == enemy
+                && matches!(mov.move_type, MoveType::Rest(GeneralMoveType::Capture))
         }));
         assert!(!destinations(&moves).contains(&behind_enemy));
     }
@@ -237,47 +254,71 @@ mod glinski_move_tests {
     fn white_pawn_empty_board_start_and_non_start_moves_match_glinski_rules() {
         let board = empty_board();
 
-        let moves = Pawn::new(Color::White).valid_moves(&board, Cell::new(Rank::Rank5, File::FileF));
+        let moves =
+            Pawn::new(Color::White).valid_moves(&board, Cell::new(Rank::Rank5, File::FileF));
         assert_same_destinations(
             destinations(&moves),
-            vec![Cell::new(Rank::Rank6, File::FileF), Cell::new(Rank::Rank7, File::FileF)],
+            vec![
+                Cell::new(Rank::Rank6, File::FileF),
+                Cell::new(Rank::Rank7, File::FileF),
+            ],
         );
 
-        let moves = Pawn::new(Color::White).valid_moves(&board, Cell::new(Rank::Rank6, File::FileF));
-        assert_same_destinations(destinations(&moves), vec![Cell::new(Rank::Rank7, File::FileF)]);
+        let moves =
+            Pawn::new(Color::White).valid_moves(&board, Cell::new(Rank::Rank6, File::FileF));
+        assert_same_destinations(
+            destinations(&moves),
+            vec![Cell::new(Rank::Rank7, File::FileF)],
+        );
     }
 
     #[test]
     fn black_pawn_empty_board_start_and_non_start_moves_match_glinski_rules() {
         let board = empty_board();
 
-        let moves = Pawn::new(Color::Black).valid_moves(&board, Cell::new(Rank::Rank7, File::FileF));
+        let moves =
+            Pawn::new(Color::Black).valid_moves(&board, Cell::new(Rank::Rank7, File::FileF));
         assert_same_destinations(
             destinations(&moves),
-            vec![Cell::new(Rank::Rank6, File::FileF), Cell::new(Rank::Rank5, File::FileF)],
+            vec![
+                Cell::new(Rank::Rank6, File::FileF),
+                Cell::new(Rank::Rank5, File::FileF),
+            ],
         );
 
-        let moves = Pawn::new(Color::Black).valid_moves(&board, Cell::new(Rank::Rank6, File::FileF));
-        assert_same_destinations(destinations(&moves), vec![Cell::new(Rank::Rank5, File::FileF)]);
+        let moves =
+            Pawn::new(Color::Black).valid_moves(&board, Cell::new(Rank::Rank6, File::FileF));
+        assert_same_destinations(
+            destinations(&moves),
+            vec![Cell::new(Rank::Rank5, File::FileF)],
+        );
     }
 
     #[test]
     fn pawn_capture_and_promotion_move_types_are_reported() {
         let board = empty_board();
-        let moves = Pawn::new(Color::White).valid_moves(&board, Cell::new(Rank::Rank9, File::FileE));
+        let moves =
+            Pawn::new(Color::White).valid_moves(&board, Cell::new(Rank::Rank9, File::FileE));
 
         assert!(moves.iter().any(|mov| {
             mov.move_to == Cell::new(Rank::Rank10, File::FileE)
-                && matches!(mov.move_type, MoveType::Pawn(PawnMoveType::NonCapturePromotion))
+                && matches!(
+                    mov.move_type,
+                    MoveType::Pawn(PawnMoveType::NonCapturePromotion)
+                )
         }));
 
         let mut board = empty_board();
         board[Cell::new(Rank::Rank11, File::FileF)].set_occupant(Pawn::new(Color::Black));
-        let moves = Pawn::new(Color::White).valid_moves(&board, Cell::new(Rank::Rank10, File::FileE));
+        let moves =
+            Pawn::new(Color::White).valid_moves(&board, Cell::new(Rank::Rank10, File::FileE));
 
         assert!(moves.iter().any(|mov| {
             mov.move_to == Cell::new(Rank::Rank11, File::FileF)
-                && matches!(mov.move_type, MoveType::Pawn(PawnMoveType::CapturePromotion))
+                && matches!(
+                    mov.move_type,
+                    MoveType::Pawn(PawnMoveType::CapturePromotion)
+                )
         }));
     }
 }

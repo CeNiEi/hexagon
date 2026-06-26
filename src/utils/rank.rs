@@ -57,3 +57,21 @@ impl Step for Rank {
         }
     }
 }
+
+impl Rank {
+    pub(crate) fn label(&self) -> &'static str {
+        match self {
+            Rank::Rank1 => "1",
+            Rank::Rank2 => "2",
+            Rank::Rank3 => "3",
+            Rank::Rank4 => "4",
+            Rank::Rank5 => "5",
+            Rank::Rank6 => "6",
+            Rank::Rank7 => "7",
+            Rank::Rank8 => "8",
+            Rank::Rank9 => "9",
+            Rank::Rank10 => "10",
+            Rank::Rank11 => "11",
+        }
+    }
+}

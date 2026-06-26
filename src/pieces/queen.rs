@@ -34,7 +34,7 @@ impl Piece for Queen {
         self.color
     }
 
-    fn valid_moves(&self, board: &Board , current: Cell) -> Vec<Move> {
+    fn valid_moves(&self, board: &Board, current: Cell) -> Vec<Move> {
         const ALLOWED_DIRECTIONS: [Direction; 12] = [
             Direction::Clock1,
             Direction::Clock2,
@@ -58,4 +58,3 @@ impl Piece for Queen {
         valid_moves
     }
 }
-
