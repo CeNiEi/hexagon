@@ -45,7 +45,6 @@ struct Cli {
 
     #[arg(long, value_name = "LOGGING")]
     logging: bool,
-
 }
 
 fn setup_logger() -> Result<()> {
@@ -67,8 +66,9 @@ fn setup_logger() -> Result<()> {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
+    let depth = Depth::new(cli.depth)?;
 
-    if cli.depth != 6 && !cli.hide_pieces {
+    if !cli.hide_pieces && depth != Depth::default() {
         anyhow::bail!(
             "--depth is only for visual board/hexagon checks; use --hide-pieces with --depth < 6"
         );
@@ -79,15 +79,18 @@ fn main() -> Result<()> {
     }
 
     let mut terminal = ratatui::init();
-    let res = App::new(
-        cli.len,
-        cli.padding,
-        Depth::new(cli.depth)?,
-        cli.color_mode,
-        cli.hide_pieces,
-        cli.hide_highlights,
-    )
-    .run(&mut terminal);
+    let mut app = if cli.hide_pieces {
+        App::preview(
+            cli.len,
+            cli.padding,
+            depth,
+            cli.color_mode,
+            cli.hide_highlights,
+        )
+    } else {
+        App::new(cli.len, cli.padding, cli.color_mode, cli.hide_highlights)
+    };
+    let res = app.run(&mut terminal);
     ratatui::restore();
     res
 }

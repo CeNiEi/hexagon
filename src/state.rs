@@ -9,7 +9,7 @@ use ratatui::{
 
 use crate::{
     board::{Board, EnPassant},
-    pieces::{PieceType, queen::Queen},
+    pieces::PieceType,
     unit::cell::Cell,
     utils::{
         consts::TONE_CANVAS_BG,
@@ -21,6 +21,45 @@ use crate::{
         progression::MoveProgression,
     },
 };
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) enum GameStatus {
+    #[default]
+    InProgress,
+    Check,
+    Checkmate,
+    Stalemate,
+}
+
+impl GameStatus {
+    fn is_terminal(self) -> bool {
+        matches!(self, Self::Checkmate | Self::Stalemate)
+    }
+
+    fn label(self) -> Option<&'static str> {
+        match self {
+            Self::InProgress => None,
+            Self::Check => Some("CHECK"),
+            Self::Checkmate => Some("MATE"),
+            Self::Stalemate => Some("STALE"),
+        }
+    }
+
+    fn color(self) -> Color {
+        match self {
+            Self::InProgress => Color::LightYellow,
+            Self::Check => Color::LightYellow,
+            Self::Checkmate => Color::Red,
+            Self::Stalemate => Color::LightGreen,
+        }
+    }
+}
+
+enum MoveOutcome {
+    Rejected,
+    Moved,
+    AwaitingPromotion { at: Cell },
+}
 
 #[derive(Debug)]
 pub(crate) enum Panel {
@@ -34,6 +73,7 @@ pub(crate) struct State {
     current: Cell,
     move_progression: MoveProgression,
     history: History,
+    status: GameStatus,
     panel: Panel,
 }
 
@@ -44,6 +84,7 @@ impl Default for State {
             current: Cell::default(),
             move_progression: MoveProgression::default(),
             history: History::default(),
+            status: GameStatus::default(),
             panel: Panel::Visible {
                 width_percentage: 25,
             },
@@ -61,9 +102,15 @@ fn draw_mark(
     color: Color,
 ) {
     match mark {
+        'A' => ctx.draw(&Mark::<'A'>::new(x, y, width, height, color)),
         'B' => ctx.draw(&Mark::<'B'>::new(x, y, width, height, color)),
+        'C' => ctx.draw(&Mark::<'C'>::new(x, y, width, height, color)),
+        'E' => ctx.draw(&Mark::<'E'>::new(x, y, width, height, color)),
         'H' => ctx.draw(&Mark::<'H'>::new(x, y, width, height, color)),
         'I' => ctx.draw(&Mark::<'I'>::new(x, y, width, height, color)),
+        'K' => ctx.draw(&Mark::<'K'>::new(x, y, width, height, color)),
+        'L' => ctx.draw(&Mark::<'L'>::new(x, y, width, height, color)),
+        'M' => ctx.draw(&Mark::<'M'>::new(x, y, width, height, color)),
         'N' => ctx.draw(&Mark::<'N'>::new(x, y, width, height, color)),
         'O' => ctx.draw(&Mark::<'O'>::new(x, y, width, height, color)),
         'R' => ctx.draw(&Mark::<'R'>::new(x, y, width, height, color)),
@@ -151,6 +198,10 @@ impl State {
     }
 
     pub(crate) fn toggle_help_or_move(&mut self, board: &mut Board) {
+        if self.status.is_terminal() {
+            return;
+        }
+
         match self.move_progression {
             MoveProgression::Navigation => {
                 let Some(occupant) = board[self.current].occupant() else {
@@ -166,30 +217,78 @@ impl State {
             }
             MoveProgression::PossiblyMoving(cell) => {
                 board.hide_valid_moves(cell);
-                if self.possibly_move(cell, self.current, board) {
-                    self.player = self.player.toggle();
-                }
-                self.move_progression = MoveProgression::Navigation;
+                self.move_progression = match self.possibly_move(cell, self.current, board) {
+                    MoveOutcome::AwaitingPromotion { at } => MoveProgression::Promoting { at },
+                    MoveOutcome::Moved => {
+                        self.finish_turn(board);
+                        MoveProgression::Navigation
+                    }
+                    MoveOutcome::Rejected => MoveProgression::Navigation,
+                };
             }
+            MoveProgression::Promoting { .. } => {}
         }
     }
 
-    fn possibly_move(&mut self, src: Cell, dest: Cell, board: &mut Board) -> bool {
-        let Some(src_occupant) = board[src].occupant() else {
-            return false;
+    pub(crate) fn is_promoting(&self) -> bool {
+        matches!(self.move_progression, MoveProgression::Promoting { .. })
+    }
+
+    pub(crate) fn select_promotion(&mut self, board: &mut Board, piece_type: PieceType) {
+        let MoveProgression::Promoting { at } = self.move_progression else {
+            return;
         };
 
-        if src_occupant.color() != self.player.color() {
-            return false;
+        board[at].replace_occupant(piece_type.instantiate(self.player.color()));
+        self.finish_turn(board);
+        self.move_progression = MoveProgression::Navigation;
+    }
+
+    fn finish_turn(&mut self, board: &mut Board) {
+        self.player = self.player.toggle();
+        self.update_status(board);
+    }
+
+    fn update_status(&mut self, board: &mut Board) {
+        let color = self.player.color();
+        let in_check = board.is_in_check(color);
+        let has_legal_move = board.has_legal_move(color);
+
+        self.status = match (in_check, has_legal_move) {
+            (false, true) => GameStatus::InProgress,
+            (true, true) => GameStatus::Check,
+            (true, false) => GameStatus::Checkmate,
+            (false, false) => GameStatus::Stalemate,
+        };
+    }
+
+    fn panel_status(&self) -> Option<(&'static str, Color)> {
+        if self.is_promoting() {
+            return Some(("PROMOTE", Color::LightYellow));
         }
 
-        let moved_piece_color = src_occupant.color();
-        let moved_piece_type = src_occupant.ty();
-        let valid_move = src_occupant
-            .valid_moves(board, src)
-            .iter()
-            .find(|mov| mov.move_to == dest)
-            .cloned();
+        self.status
+            .label()
+            .map(|label| (label, self.status.color()))
+    }
+
+    fn possibly_move(&mut self, src: Cell, dest: Cell, board: &mut Board) -> MoveOutcome {
+        let (moved_piece_color, moved_piece_type) = {
+            let Some(src_occupant) = board[src].occupant() else {
+                return MoveOutcome::Rejected;
+            };
+
+            if src_occupant.color() != self.player.color() {
+                return MoveOutcome::Rejected;
+            }
+
+            (src_occupant.color(), src_occupant.ty())
+        };
+
+        let valid_move = board
+            .legal_moves(src)
+            .into_iter()
+            .find(|mov| mov.move_to == dest);
 
         if let Some(mov) = valid_move {
             let new_en_passant = if moved_piece_type == PieceType::Pawn {
@@ -240,11 +339,13 @@ impl State {
                     }
                     PawnMoveType::NonCapturePromotion => {
                         board.move_occupant(src, dest);
-                        board[dest].set_occupant(Queen::new(moved_piece_color));
+                        board[dest]
+                            .replace_occupant(PieceType::Queen.instantiate(moved_piece_color));
                     }
                     PawnMoveType::CapturePromotion => {
                         board.move_occupant(src, dest);
-                        board[dest].set_occupant(Queen::new(moved_piece_color));
+                        board[dest]
+                            .replace_occupant(PieceType::Queen.instantiate(moved_piece_color));
                     }
                 },
             }
@@ -254,9 +355,13 @@ impl State {
                 board.set_en_passant(en_passant);
             }
 
-            true
+            if mov.move_type.is_promotion() {
+                MoveOutcome::AwaitingPromotion { at: dest }
+            } else {
+                MoveOutcome::Moved
+            }
         } else {
-            false
+            MoveOutcome::Rejected
         }
     }
 
@@ -281,11 +386,17 @@ impl Widget for &State {
         let inner = block.inner(area);
         block.render(area, buf);
 
-        let [player_area, history_area] =
-            Layout::vertical([Constraint::Percentage(20), Constraint::Percentage(80)]).areas(inner);
+        let [player_area, status_area, history_area] = Layout::vertical([
+            Constraint::Percentage(20),
+            Constraint::Percentage(15),
+            Constraint::Percentage(65),
+        ])
+        .areas(inner);
 
         let player_y_dim = player_area.height as f64;
         let player_x_dim = player_area.width as f64;
+        let status_y_dim = status_area.height as f64;
+        let status_x_dim = status_area.width as f64;
         let history_y_dim = history_area.height as f64;
         let history_x_dim = history_area.width as f64;
 
@@ -327,6 +438,20 @@ impl Widget for &State {
                 }
             });
 
+        let status = Canvas::default()
+            .block(Block::default().borders(Borders::ALL))
+            .background_color(TONE_CANVAS_BG)
+            .x_bounds([-status_x_dim / 2., status_x_dim / 2.])
+            .y_bounds([-status_y_dim / 2., status_y_dim / 2.])
+            .paint(|ctx| {
+                if let Some((label, color)) = self.panel_status() {
+                    let label_height = status_y_dim * 0.5;
+                    let label_width = mark_width_for(label, status_x_dim * 0.85, label_height);
+
+                    draw_word(ctx, label, 0., 0., label_width, label_height, color);
+                }
+            });
+
         let history = Canvas::default()
             .block(Block::default().borders(Borders::ALL))
             .background_color(TONE_CANVAS_BG)
@@ -348,6 +473,7 @@ impl Widget for &State {
             });
 
         player.render(player_area, buf);
+        status.render(status_area, buf);
         history.render(history_area, buf);
     }
 }
@@ -358,7 +484,7 @@ mod tests {
 
     use crate::{
         board::Board,
-        pieces::{PieceType, pawn::Pawn},
+        pieces::{PieceType, king::King, pawn::Pawn, rook::Rook},
         unit::cell::Cell,
         utils::{
             depth::Depth,
@@ -371,14 +497,14 @@ mod tests {
         },
     };
 
-    use super::State;
+    use super::{GameStatus, MoveOutcome, State};
 
     fn empty_board() -> Board {
         Board::empty(0., 0., Depth::new(6).unwrap(), FillMode::Wireframe, false)
     }
 
     #[test]
-    fn white_pawn_non_capture_promotion_becomes_queen() {
+    fn white_pawn_promotion_defaults_to_queen_and_awaits_selection() {
         let src = Cell::new(Rank::Rank9, File::FileE);
         let dest = Cell::new(Rank::Rank10, File::FileE);
         let mut board = empty_board();
@@ -390,7 +516,10 @@ mod tests {
             ..State::default()
         };
 
-        assert!(state.possibly_move(src, dest, &mut board));
+        assert!(matches!(
+            state.possibly_move(src, dest, &mut board),
+            MoveOutcome::AwaitingPromotion { at } if at == dest
+        ));
 
         assert!(board[src].occupant().is_none());
         let promoted = board[dest].occupant().expect("promoted piece should exist");
@@ -399,7 +528,35 @@ mod tests {
     }
 
     #[test]
-    fn white_pawn_capture_promotion_becomes_queen() {
+    fn selecting_promotion_replaces_piece_and_finishes_turn() {
+        let src = Cell::new(Rank::Rank9, File::FileE);
+        let dest = Cell::new(Rank::Rank10, File::FileE);
+        let mut board = empty_board();
+        board[src].set_occupant(Pawn::new(Color::White));
+        let mut state = State {
+            player: Player::White,
+            current: src,
+            move_progression: MoveProgression::Navigation,
+            ..State::default()
+        };
+
+        let MoveOutcome::AwaitingPromotion { at } = state.possibly_move(src, dest, &mut board)
+        else {
+            panic!("expected promotion to await selection");
+        };
+        state.move_progression = MoveProgression::Promoting { at };
+
+        state.select_promotion(&mut board, PieceType::Knight);
+
+        let promoted = board[dest].occupant().expect("promoted piece should exist");
+        assert_eq!(promoted.ty(), PieceType::Knight);
+        assert_eq!(promoted.color(), Color::White);
+        assert!(matches!(state.player, Player::Black));
+        assert!(!state.is_promoting());
+    }
+
+    #[test]
+    fn white_pawn_capture_promotion_defaults_to_queen() {
         let src = Cell::new(Rank::Rank10, File::FileE);
         let dest = Cell::new(Rank::Rank11, File::FileF);
         let mut board = empty_board();
@@ -412,7 +569,10 @@ mod tests {
             ..State::default()
         };
 
-        assert!(state.possibly_move(src, dest, &mut board));
+        assert!(matches!(
+            state.possibly_move(src, dest, &mut board),
+            MoveOutcome::AwaitingPromotion { at } if at == dest
+        ));
 
         assert!(board[src].occupant().is_none());
         let promoted = board[dest].occupant().expect("promoted piece should exist");
@@ -436,7 +596,10 @@ mod tests {
             ..State::default()
         };
 
-        assert!(state.possibly_move(white_src, white_dest, &mut board));
+        assert!(matches!(
+            state.possibly_move(white_src, white_dest, &mut board),
+            MoveOutcome::Moved
+        ));
 
         let en_passant_moves = board[black_src]
             .occupant()
@@ -452,7 +615,10 @@ mod tests {
         }));
 
         state.player = Player::Black;
-        assert!(state.possibly_move(black_src, black_dest, &mut board));
+        assert!(matches!(
+            state.possibly_move(black_src, black_dest, &mut board),
+            MoveOutcome::Moved
+        ));
 
         assert!(board[white_dest].occupant().is_none());
         assert!(board[black_src].occupant().is_none());
@@ -482,10 +648,16 @@ mod tests {
             ..State::default()
         };
 
-        assert!(state.possibly_move(white_src, white_dest, &mut board));
+        assert!(matches!(
+            state.possibly_move(white_src, white_dest, &mut board),
+            MoveOutcome::Moved
+        ));
 
         state.player = Player::Black;
-        assert!(state.possibly_move(black_other_src, black_other_dest, &mut board));
+        assert!(matches!(
+            state.possibly_move(black_other_src, black_other_dest, &mut board),
+            MoveOutcome::Moved
+        ));
 
         let moves_after_expiry = board[black_en_passant_src]
             .occupant()
@@ -499,5 +671,22 @@ mod tests {
                 )
         }));
         assert!(board[white_dest].occupant().is_some());
+    }
+
+    #[test]
+    fn check_status_is_reported_for_side_to_move() {
+        let white_king = Cell::new(Rank::Rank6, File::FileF);
+        let black_rook = Cell::new(Rank::Rank9, File::FileF);
+        let mut board = empty_board();
+        board[white_king].set_occupant(King::new(Color::White));
+        board[black_rook].set_occupant(Rook::new(Color::Black));
+
+        let mut state = State {
+            player: Player::White,
+            ..State::default()
+        };
+        state.update_status(&mut board);
+
+        assert_eq!(state.status, GameStatus::Check);
     }
 }

@@ -2,7 +2,14 @@ use anyhow::Result;
 
 use super::{file::File, range::RangeInc, rank::Rank};
 
+#[derive(PartialEq, Eq)]
 pub(crate) struct Depth(u8);
+
+impl Default for Depth {
+    fn default() -> Self {
+        Self(6)
+    }
+}
 
 impl Depth {
     pub(crate) fn new(raw: u8) -> Result<Self> {

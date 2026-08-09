@@ -7,6 +7,9 @@ pub(crate) enum MoveProgression {
     #[default]
     Navigation,
     PossiblyMoving(Cell),
+    Promoting {
+        at: Cell,
+    },
 }
 
 impl MoveProgression {
@@ -14,6 +17,7 @@ impl MoveProgression {
         match self {
             Self::Navigation => Line::from("M: NAV"),
             Self::PossiblyMoving(cell) => Line::from(format!("M: SEL {}", cell.label())),
+            Self::Promoting { at } => Line::from(format!("M: PRM {}", at.label())),
         }
     }
 }

@@ -8,6 +8,7 @@ use anyhow::Result;
 
 use crate::{
     board::{Board, BoardView},
+    pieces::PieceType,
     state::{Panel, State},
     utils::{depth::Depth, direction::Direction, fill_mode::FillMode},
 };
@@ -19,24 +20,30 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(
+    pub fn new(len: f64, padding: f64, color_mode: FillMode, hide_highlights: bool) -> App {
+        Self::from_board(Board::new(len, padding, color_mode, hide_highlights))
+    }
+
+    pub fn preview(
         len: f64,
         padding: f64,
         depth: Depth,
         color_mode: FillMode,
-        hide_pieces: bool,
         hide_highlights: bool,
     ) -> App {
+        Self::from_board(Board::preview(
+            len,
+            padding,
+            depth,
+            color_mode,
+            hide_highlights,
+        ))
+    }
+
+    fn from_board(board: Board) -> App {
         Self {
             terminate: false,
-            board: Board::new(
-                len,
-                padding,
-                depth,
-                color_mode,
-                hide_pieces,
-                hide_highlights,
-            ),
+            board,
             state: State::new(),
         }
     }
@@ -58,6 +65,25 @@ impl App {
             return;
         }
 
+        if self.state.is_promoting() {
+            match key.code {
+                KeyCode::Char('q') | KeyCode::Enter => self
+                    .state
+                    .select_promotion(&mut self.board, PieceType::Queen),
+                KeyCode::Char('r') => self
+                    .state
+                    .select_promotion(&mut self.board, PieceType::Rook),
+                KeyCode::Char('b') => self
+                    .state
+                    .select_promotion(&mut self.board, PieceType::Bishop),
+                KeyCode::Char('n') => self
+                    .state
+                    .select_promotion(&mut self.board, PieceType::Knight),
+                _ => {}
+            }
+            return;
+        }
+
         match key.code {
             KeyCode::Char('q') => self.terminate = true,
             KeyCode::Char('p') => self.state.toggle_panel(),
@@ -75,10 +101,11 @@ impl App {
             Panel::Hidden => {
                 let board_view = BoardView {
                     board: &self.board,
-                    div: 2.
+                    div: 2.,
                 };
 
-                frame.render_widget(&board_view, frame.area());},
+                frame.render_widget(&board_view, frame.area());
+            }
             Panel::Visible { width_percentage } => {
                 let [board_area, state_area] = Layout::horizontal([
                     Constraint::Percentage(100 - *width_percentage),
@@ -88,7 +115,7 @@ impl App {
 
                 let board_view = BoardView {
                     board: &self.board,
-                    div: 2.75
+                    div: 2.75,
                 };
 
                 frame.render_widget(&board_view, board_area);

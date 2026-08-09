@@ -2,6 +2,7 @@ use ratatui::{style::Color, widgets::canvas::Shape};
 
 use crate::{
     board::Board,
+    pieces::{bishop::Bishop, king::King, knight::Knight, pawn::Pawn, queen::Queen, rook::Rook},
     unit::cell::Cell,
     utils::{mark::Mark, moves::Move},
 };
@@ -21,6 +22,19 @@ pub(crate) enum PieceType {
     Pawn,
     Queen,
     Rook,
+}
+
+impl PieceType {
+    pub(crate) fn instantiate(self, color: Color) -> Box<dyn Piece> {
+        match self {
+            Self::Bishop => Box::new(Bishop::new(color)),
+            Self::King => Box::new(King::new(color)),
+            Self::Knight => Box::new(Knight::new(color)),
+            Self::Pawn => Box::new(Pawn::new(color)),
+            Self::Queen => Box::new(Queen::new(color)),
+            Self::Rook => Box::new(Rook::new(color)),
+        }
+    }
 }
 
 pub trait Piece {

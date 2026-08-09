@@ -7,7 +7,7 @@ use std::{
 use crate::{
     hexagon::Hexagon,
     pieces::{
-        Piece,
+        Piece, PieceType,
         bishop::{BLACK_BISHOP_STARTING_CELLS, Bishop, WHITE_BISHOP_STARTING_CELLS},
         king::{BLACK_KING_STARTING_LOCATION, King, WHITE_KING_STARTING_LOCATION},
         knight::{BLACK_KNIGHT_STARTING_CELLS, Knight, WHITE_KNIGHT_STARTING_CELLS},
@@ -48,6 +48,15 @@ pub(crate) struct EnPassant {
     pub(crate) captured_pawn: Cell,
     pub(crate) capture_move_to: Cell,
     pub(crate) pawn_color: Color,
+}
+
+struct MoveUndo {
+    src: Cell,
+    dest: Cell,
+    move_type: MoveType,
+    moved_color: Color,
+    captured_piece: Option<Box<dyn Piece>>,
+    en_passant_captured: Option<(Cell, Box<dyn Piece>)>,
 }
 
 pub(crate) struct Board {
@@ -149,117 +158,214 @@ impl Board {
         }
     }
 
-    pub(crate) fn new(
-        len: f64,
-        padding: f64,
-        depth: Depth,
-        fill_mode: FillMode,
-        hide_pieces: bool,
-        hide_highlights: bool,
-    ) -> Self {
-        let mut board = Self::empty(len, padding, depth, fill_mode, hide_highlights);
+    pub(crate) fn new(len: f64, padding: f64, fill_mode: FillMode, hide_highlights: bool) -> Self {
+        let mut board = Self::empty(len, padding, Depth::default(), fill_mode, hide_highlights);
 
-        if !hide_pieces {
-            WHITE_BISHOP_STARTING_CELLS
-                .into_iter()
-                .for_each(|cell| board[cell].set_occupant(Bishop::new(Color::White)));
+        WHITE_BISHOP_STARTING_CELLS
+            .into_iter()
+            .for_each(|cell| board[cell].set_occupant(Bishop::new(Color::White)));
 
-            BLACK_BISHOP_STARTING_CELLS
-                .into_iter()
-                .for_each(|cell| board[cell].set_occupant(Bishop::new(Color::Black)));
+        BLACK_BISHOP_STARTING_CELLS
+            .into_iter()
+            .for_each(|cell| board[cell].set_occupant(Bishop::new(Color::Black)));
 
-            board[WHITE_KING_STARTING_LOCATION].set_occupant(King::new(Color::White));
+        board[WHITE_KING_STARTING_LOCATION].set_occupant(King::new(Color::White));
 
-            board[BLACK_KING_STARTING_LOCATION].set_occupant(King::new(Color::Black));
+        board[BLACK_KING_STARTING_LOCATION].set_occupant(King::new(Color::Black));
 
-            board[WHITE_QUEEN_STARTING_LOCATION].set_occupant(Queen::new(Color::White));
+        board[WHITE_QUEEN_STARTING_LOCATION].set_occupant(Queen::new(Color::White));
 
-            board[BLACK_QUEEN_STARTING_LOCATION].set_occupant(Queen::new(Color::Black));
+        board[BLACK_QUEEN_STARTING_LOCATION].set_occupant(Queen::new(Color::Black));
 
-            WHITE_ROOK_STARTING_CELLS
-                .into_iter()
-                .for_each(|cell| board[cell].set_occupant(Rook::new(Color::White)));
+        WHITE_ROOK_STARTING_CELLS
+            .into_iter()
+            .for_each(|cell| board[cell].set_occupant(Rook::new(Color::White)));
 
-            BLACK_ROOK_STARTING_CELLS
-                .into_iter()
-                .for_each(|cell| board[cell].set_occupant((Rook::new(Color::Black))));
+        BLACK_ROOK_STARTING_CELLS
+            .into_iter()
+            .for_each(|cell| board[cell].set_occupant(Rook::new(Color::Black)));
 
-            WHITE_KNIGHT_STARTING_CELLS
-                .into_iter()
-                .for_each(|cell| board[cell].set_occupant(Knight::new(Color::White)));
+        WHITE_KNIGHT_STARTING_CELLS
+            .into_iter()
+            .for_each(|cell| board[cell].set_occupant(Knight::new(Color::White)));
 
-            BLACK_KNIGHT_STARTING_CELLS
-                .into_iter()
-                .for_each(|cell| board[cell].set_occupant(Knight::new(Color::Black)));
+        BLACK_KNIGHT_STARTING_CELLS
+            .into_iter()
+            .for_each(|cell| board[cell].set_occupant(Knight::new(Color::Black)));
 
-            WHITE_PAWN_STARTING_CELLS
-                .into_iter()
-                .for_each(|cell| board[cell].set_occupant(Pawn::new(Color::White)));
+        WHITE_PAWN_STARTING_CELLS
+            .into_iter()
+            .for_each(|cell| board[cell].set_occupant(Pawn::new(Color::White)));
 
-            BLACK_PAWN_STARTING_CELLS
-                .into_iter()
-                .for_each(|cell| board[cell].set_occupant(Pawn::new(Color::Black)));
-        }
+        BLACK_PAWN_STARTING_CELLS
+            .into_iter()
+            .for_each(|cell| board[cell].set_occupant(Pawn::new(Color::Black)));
 
         board
     }
 
-    pub(crate) fn show_valid_moves(&mut self, cell: Cell) {
-        let Some(occupant) = self[cell].occupant() else {
-            return;
+    pub(crate) fn preview(
+        len: f64,
+        padding: f64,
+        depth: Depth,
+        fill_mode: FillMode,
+        hide_highlights: bool,
+    ) -> Self {
+        Self::empty(len, padding, depth, fill_mode, hide_highlights)
+    }
+
+    pub(crate) fn legal_moves(&mut self, cell: Cell) -> Vec<Move> {
+        let (color, moves) = {
+            let Some(occupant) = self[cell].occupant() else {
+                return vec![];
+            };
+            (occupant.color(), occupant.valid_moves(self, cell))
         };
 
-        occupant
-            .valid_moves(&self, cell)
+        moves
             .into_iter()
-            .for_each(|mov| {
-                match mov.move_type {
-                    MoveType::Rest(GeneralMoveType::Capture)
-                    | MoveType::Pawn(PawnMoveType::CapturePromotion)
-                    | MoveType::Pawn(PawnMoveType::NormalCapture) => {
-                        self[mov.move_to].hex_mut().set_status(Status::Capturable);
-                    }
-                    MoveType::Rest(GeneralMoveType::NonCapture)
-                    | MoveType::Pawn(PawnMoveType::NonCapturePromotion)
-                    | MoveType::Pawn(PawnMoveType::NonCapture) => {
-                        self[mov.move_to].hex_mut().set_status(Status::Movable);
-                    }
-                    MoveType::Pawn(PawnMoveType::EnPassant { remove_piece_on }) => {
-                        self[mov.move_to].hex_mut().set_status(Status::Movable);
-                        self[remove_piece_on]
-                            .hex_mut()
-                            .set_status(Status::Capturable);
-                    }
+            .filter(|mov| {
+                if self[mov.move_to]
+                    .occupant()
+                    .is_some_and(|piece| piece.ty() == PieceType::King)
+                {
+                    return false;
+                }
+
+                let Some(undo) = self.apply_for_legality(cell, *mov) else {
+                    return false;
                 };
-            });
+                let legal = !self.is_in_check(color);
+                self.undo_for_legality(undo);
+                legal
+            })
+            .collect()
+    }
+
+    pub(crate) fn is_in_check(&self, color: Color) -> bool {
+        let Some(king_cell) = self.inner.iter().find_map(|entry| {
+            let piece = entry.occupant()?;
+            (piece.color() == color && piece.ty() == PieceType::King).then(|| entry.hex().cell())
+        }) else {
+            return false;
+        };
+
+        self.inner.iter().any(|entry| {
+            let Some(piece) = entry.occupant() else {
+                return false;
+            };
+
+            piece.color() != color
+                && piece
+                    .valid_moves(self, entry.hex().cell())
+                    .iter()
+                    .any(|mov| mov.move_to == king_cell)
+        })
+    }
+
+    pub(crate) fn has_legal_move(&mut self, color: Color) -> bool {
+        let cells = self
+            .inner
+            .iter()
+            .filter_map(|entry| {
+                let piece = entry.occupant()?;
+                (piece.color() == color).then(|| entry.hex().cell())
+            })
+            .collect::<Vec<_>>();
+
+        cells
+            .into_iter()
+            .any(|cell| !self.legal_moves(cell).is_empty())
+    }
+
+    fn apply_for_legality(&mut self, src: Cell, mov: Move) -> Option<MoveUndo> {
+        let moved_piece = self[src].remove_occupant()?;
+        let moved_color = moved_piece.color();
+        let captured_piece = self[mov.move_to].replace_occupant(moved_piece);
+
+        let en_passant_captured = match mov.move_type {
+            MoveType::Pawn(PawnMoveType::EnPassant { remove_piece_on }) => self[remove_piece_on]
+                .remove_occupant()
+                .map(|piece| (remove_piece_on, piece)),
+            _ => None,
+        };
+
+        if mov.move_type.is_promotion() {
+            self[mov.move_to].remove_occupant();
+            self[mov.move_to].set_occupant(Queen::new(moved_color));
+        }
+
+        Some(MoveUndo {
+            src,
+            dest: mov.move_to,
+            move_type: mov.move_type,
+            moved_color,
+            captured_piece,
+            en_passant_captured,
+        })
+    }
+
+    fn undo_for_legality(&mut self, undo: MoveUndo) {
+        let moved_piece = self[undo.dest].remove_occupant();
+
+        if undo.move_type.is_promotion() {
+            self[undo.src].set_occupant(Pawn::new(undo.moved_color));
+        } else if let Some(moved_piece) = moved_piece {
+            self[undo.src].replace_occupant(moved_piece);
+        } else {
+            unreachable!("simulated move destination is empty");
+        }
+
+        if let Some(captured_piece) = undo.captured_piece {
+            self[undo.dest].replace_occupant(captured_piece);
+        }
+        if let Some((cell, captured_piece)) = undo.en_passant_captured {
+            self[cell].replace_occupant(captured_piece);
+        }
+    }
+
+    pub(crate) fn show_valid_moves(&mut self, cell: Cell) {
+        self.legal_moves(cell).into_iter().for_each(|mov| {
+            match mov.move_type {
+                MoveType::Rest(GeneralMoveType::Capture)
+                | MoveType::Pawn(PawnMoveType::CapturePromotion)
+                | MoveType::Pawn(PawnMoveType::NormalCapture) => {
+                    self[mov.move_to].hex_mut().set_status(Status::Capturable);
+                }
+                MoveType::Rest(GeneralMoveType::NonCapture)
+                | MoveType::Pawn(PawnMoveType::NonCapturePromotion)
+                | MoveType::Pawn(PawnMoveType::NonCapture) => {
+                    self[mov.move_to].hex_mut().set_status(Status::Movable);
+                }
+                MoveType::Pawn(PawnMoveType::EnPassant { remove_piece_on }) => {
+                    self[mov.move_to].hex_mut().set_status(Status::Movable);
+                    self[remove_piece_on]
+                        .hex_mut()
+                        .set_status(Status::Capturable);
+                }
+            };
+        });
     }
 
     pub(crate) fn hide_valid_moves(&mut self, cell: Cell) {
-        let Some(occupant) = self[cell].occupant() else {
-            return;
-        };
-
-        occupant
-            .valid_moves(&self, cell)
-            .into_iter()
-            .for_each(|mov| {
-                match mov.move_type {
-                    MoveType::Rest(GeneralMoveType::Capture)
-                    | MoveType::Pawn(PawnMoveType::CapturePromotion)
-                    | MoveType::Pawn(PawnMoveType::NormalCapture) => {
-                        self[mov.move_to].hex_mut().set_status(Status::None);
-                    }
-                    MoveType::Rest(GeneralMoveType::NonCapture)
-                    | MoveType::Pawn(PawnMoveType::NonCapturePromotion)
-                    | MoveType::Pawn(PawnMoveType::NonCapture) => {
-                        self[mov.move_to].hex_mut().set_status(Status::None);
-                    }
-                    MoveType::Pawn(PawnMoveType::EnPassant { remove_piece_on }) => {
-                        self[mov.move_to].hex_mut().set_status(Status::None);
-                        self[remove_piece_on].hex_mut().set_status(Status::None);
-                    }
-                };
-            });
+        self.legal_moves(cell).into_iter().for_each(|mov| {
+            match mov.move_type {
+                MoveType::Rest(GeneralMoveType::Capture)
+                | MoveType::Pawn(PawnMoveType::CapturePromotion)
+                | MoveType::Pawn(PawnMoveType::NormalCapture) => {
+                    self[mov.move_to].hex_mut().set_status(Status::None);
+                }
+                MoveType::Rest(GeneralMoveType::NonCapture)
+                | MoveType::Pawn(PawnMoveType::NonCapturePromotion)
+                | MoveType::Pawn(PawnMoveType::NonCapture) => {
+                    self[mov.move_to].hex_mut().set_status(Status::None);
+                }
+                MoveType::Pawn(PawnMoveType::EnPassant { remove_piece_on }) => {
+                    self[mov.move_to].hex_mut().set_status(Status::None);
+                    self[remove_piece_on].hex_mut().set_status(Status::None);
+                }
+            };
+        });
     }
 
     pub(crate) fn move_occupant(&mut self, src: Cell, dest: Cell) -> Option<Box<dyn Piece>> {
@@ -423,5 +529,159 @@ impl<'a> Widget for &'a BoardView<'a> {
                 });
             })
             .render(area, buf)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use ratatui::style::Color;
+
+    use crate::{
+        pieces::{Piece, king::King, pawn::Pawn, rook::Rook},
+        unit::cell::Cell,
+        utils::{
+            depth::Depth,
+            file::File,
+            fill_mode::FillMode,
+            moves::{MoveType, PawnMoveType},
+            rank::Rank,
+        },
+    };
+
+    use super::{Board, EnPassant};
+
+    #[test]
+    fn new_creates_full_depth_board_with_starting_pieces() {
+        let board = Board::new(0., 0., FillMode::Wireframe, false);
+
+        assert_eq!(board.inner.len(), 91);
+        assert_eq!(
+            board
+                .inner
+                .iter()
+                .filter(|entry| entry.occupant().is_some())
+                .count(),
+            36
+        );
+    }
+
+    #[test]
+    fn preview_uses_requested_depth_without_pieces() {
+        let board = Board::preview(0., 0., Depth::new(1).unwrap(), FillMode::Wireframe, false);
+
+        assert_eq!(board.inner.len(), 1);
+        assert!(board.inner.iter().all(|entry| entry.occupant().is_none()));
+    }
+
+    fn empty_board() -> Board {
+        Board::empty(0., 0., Depth::default(), FillMode::Wireframe, false)
+    }
+
+    #[test]
+    fn king_cannot_move_into_rook_attack() {
+        let king_cell = Cell::new(Rank::Rank6, File::FileF);
+        let target = Cell::new(Rank::Rank7, File::FileG);
+        let rook_cell = Cell::new(Rank::Rank9, File::FileG);
+        let mut board = empty_board();
+
+        board[king_cell].set_occupant(King::new(Color::White));
+        board[rook_cell].set_occupant(Rook::new(Color::Black));
+
+        assert!(!board.is_in_check(Color::White));
+        assert!(
+            !board
+                .legal_moves(king_cell)
+                .iter()
+                .any(|mov| mov.move_to == target)
+        );
+    }
+
+    #[test]
+    fn pinned_piece_cannot_expose_king() {
+        let king_cell = Cell::new(Rank::Rank6, File::FileF);
+        let pinned_cell = Cell::new(Rank::Rank7, File::FileF);
+        let sideways_target = Cell::new(Rank::Rank7, File::FileG);
+        let attacker_cell = Cell::new(Rank::Rank9, File::FileF);
+        let mut board = empty_board();
+
+        board[king_cell].set_occupant(King::new(Color::White));
+        board[pinned_cell].set_occupant(Rook::new(Color::White));
+        board[attacker_cell].set_occupant(Rook::new(Color::Black));
+
+        assert!(!board.is_in_check(Color::White));
+        assert!(
+            !board
+                .legal_moves(pinned_cell)
+                .iter()
+                .any(|mov| mov.move_to == sideways_target)
+        );
+    }
+
+    #[test]
+    fn legal_moves_cannot_capture_a_king() {
+        let king_cell = Cell::new(Rank::Rank1, File::FileA);
+        let rook_cell = Cell::new(Rank::Rank6, File::FileF);
+        let enemy_king_cell = Cell::new(Rank::Rank9, File::FileF);
+        let mut board = empty_board();
+
+        board[king_cell].set_occupant(King::new(Color::White));
+        board[rook_cell].set_occupant(Rook::new(Color::White));
+        board[enemy_king_cell].set_occupant(King::new(Color::Black));
+
+        assert!(
+            board[rook_cell]
+                .occupant()
+                .unwrap()
+                .valid_moves(&board, rook_cell)
+                .iter()
+                .any(|mov| mov.move_to == enemy_king_cell)
+        );
+        assert!(
+            !board
+                .legal_moves(rook_cell)
+                .iter()
+                .any(|mov| mov.move_to == enemy_king_cell)
+        );
+    }
+
+    #[test]
+    fn en_passant_is_illegal_when_it_exposes_the_king() {
+        let white_king = Cell::new(Rank::Rank3, File::FileF);
+        let white_pawn = Cell::new(Rank::Rank6, File::FileF);
+        let black_pawn = Cell::new(Rank::Rank5, File::FileG);
+        let black_rook = Cell::new(Rank::Rank9, File::FileF);
+        let capture_move_to = Cell::new(Rank::Rank6, File::FileG);
+        let mut board = empty_board();
+
+        board[white_king].set_occupant(King::new(Color::White));
+        board[white_pawn].set_occupant(Pawn::new(Color::White));
+        board[black_pawn].set_occupant(Pawn::new(Color::Black));
+        board[black_rook].set_occupant(Rook::new(Color::Black));
+        board.set_en_passant(EnPassant {
+            captured_pawn: black_pawn,
+            capture_move_to,
+            pawn_color: Color::Black,
+        });
+
+        assert!(
+            board[white_pawn]
+                .occupant()
+                .unwrap()
+                .valid_moves(&board, white_pawn)
+                .iter()
+                .any(|mov| {
+                    mov.move_to == capture_move_to
+                        && matches!(
+                            mov.move_type,
+                            MoveType::Pawn(PawnMoveType::EnPassant { .. })
+                        )
+                })
+        );
+        assert!(
+            !board
+                .legal_moves(white_pawn)
+                .iter()
+                .any(|mov| mov.move_to == capture_move_to)
+        );
     }
 }

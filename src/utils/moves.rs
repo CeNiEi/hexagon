@@ -22,6 +22,15 @@ pub(crate) enum MoveType {
     Pawn(PawnMoveType),
 }
 
+impl MoveType {
+    pub(crate) fn is_promotion(self) -> bool {
+        matches!(
+            self,
+            Self::Pawn(PawnMoveType::NonCapturePromotion | PawnMoveType::CapturePromotion)
+        )
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum PawnMoveType {
     NonCapture,

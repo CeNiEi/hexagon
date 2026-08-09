@@ -559,3 +559,97 @@ impl Shape for Mark<'Y'> {
         segment_center_s.draw(painter);
     }
 }
+
+impl Shape for Mark<'C'> {
+    fn draw(&self, painter: &mut Painter) {
+        let segment_n_ne = self.grid.segment_n_ne();
+        let segment_n_nw = self.grid.segment_n_nw();
+        let segment_w_nw = self.grid.segment_w_nw();
+        let segment_w_sw = self.grid.segment_w_sw();
+        let segment_s_se = self.grid.segment_s_se();
+        let segment_s_sw = self.grid.segment_s_sw();
+
+        segment_n_ne.draw(painter);
+        segment_n_nw.draw(painter);
+        segment_w_nw.draw(painter);
+        segment_w_sw.draw(painter);
+        segment_s_se.draw(painter);
+        segment_s_sw.draw(painter);
+    }
+}
+
+impl Shape for Mark<'E'> {
+    fn draw(&self, painter: &mut Painter) {
+        let segment_n_ne = self.grid.segment_n_ne();
+        let segment_n_nw = self.grid.segment_n_nw();
+        let segment_w_nw = self.grid.segment_w_nw();
+        let segment_w_sw = self.grid.segment_w_sw();
+        let segment_center_w = self.grid.segment_center_w();
+        let segment_center_e = self.grid.segment_center_e();
+        let segment_s_se = self.grid.segment_s_se();
+        let segment_s_sw = self.grid.segment_s_sw();
+
+        segment_n_ne.draw(painter);
+        segment_n_nw.draw(painter);
+        segment_w_nw.draw(painter);
+        segment_w_sw.draw(painter);
+        segment_center_w.draw(painter);
+        segment_center_e.draw(painter);
+        segment_s_se.draw(painter);
+        segment_s_sw.draw(painter);
+    }
+}
+
+impl Shape for Mark<'A'> {
+    fn draw(&self, painter: &mut Painter) {
+        let segment_n_ne = self.grid.segment_n_ne();
+        let segment_n_nw = self.grid.segment_n_nw();
+        let segment_w_nw = self.grid.segment_w_nw();
+        let segment_w_sw = self.grid.segment_w_sw();
+        let segment_e_ne = self.grid.segment_e_ne();
+        let segment_e_se = self.grid.segment_e_se();
+        let segment_center_w = self.grid.segment_center_w();
+        let segment_center_e = self.grid.segment_center_e();
+
+        segment_n_ne.draw(painter);
+        segment_n_nw.draw(painter);
+        segment_w_nw.draw(painter);
+        segment_w_sw.draw(painter);
+        segment_e_ne.draw(painter);
+        segment_e_se.draw(painter);
+        segment_center_w.draw(painter);
+        segment_center_e.draw(painter);
+    }
+}
+
+impl Shape for Mark<'L'> {
+    fn draw(&self, painter: &mut Painter) {
+        let segment_w_nw = self.grid.segment_w_nw();
+        let segment_w_sw = self.grid.segment_w_sw();
+        let segment_s_se = self.grid.segment_s_se();
+        let segment_s_sw = self.grid.segment_s_sw();
+
+        segment_w_nw.draw(painter);
+        segment_w_sw.draw(painter);
+        segment_s_se.draw(painter);
+        segment_s_sw.draw(painter);
+    }
+}
+
+impl Shape for Mark<'M'> {
+    fn draw(&self, painter: &mut Painter) {
+        let segment_w_nw = self.grid.segment_w_nw();
+        let segment_w_sw = self.grid.segment_w_sw();
+        let segment_e_ne = self.grid.segment_e_ne();
+        let segment_e_se = self.grid.segment_e_se();
+        let segment_center_nw = self.grid.segment_center_nw();
+        let segment_center_ne = self.grid.segment_center_ne();
+
+        segment_w_nw.draw(painter);
+        segment_w_sw.draw(painter);
+        segment_e_ne.draw(painter);
+        segment_e_se.draw(painter);
+        segment_center_nw.draw(painter);
+        segment_center_ne.draw(painter);
+    }
+}
